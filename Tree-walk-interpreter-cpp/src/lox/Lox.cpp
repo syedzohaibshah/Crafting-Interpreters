@@ -18,6 +18,8 @@ void Lox::run_file(const std::string& path){
     std::ostringstream buffer; //output string stream buffer
     buffer<<file.rdbuf();  //read entire file    //Copies everything from the file buffer into ostringstream buffer
     run(buffer.str());
+    // Indicate an error in the exit code.
+    if (hadError) System.exit(65);
 
 }
 
@@ -27,10 +29,11 @@ void Lox::run_promt(){
     while(true){
 
         std::cout<<"> ";
-        if(!std::getline(std::cin,line)){ read full line
+        if(!std::getline(std::cin,line)){ //read full line
             break;
         }
         run(line);
+        hadError = false;
     }
 
 
@@ -48,5 +51,18 @@ void Lox::run(const std::string& source){
         std::cout<<token<<"\n";
     }
 
+
+}
+
+void Lox::error(int line,const std::string &message){
+
+    report(line,"",message);
+
+}
+
+void Lox::report(int line , const std::string &where, const std::string &message ){
+
+    std::cerr<<"[line "<<line<<"] Error"<<where<<": "<<message;
+    had_error=true;
 
 }
