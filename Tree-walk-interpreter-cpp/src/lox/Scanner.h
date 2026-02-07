@@ -3,7 +3,12 @@
 
 #include<string>
 #include<vector>
+#include"TokenType.h"
 #include"Token.h"
+#include"Lox.h"
+#include <unordered_map>
+#include<map>
+#include<variant>
 
 class Scanner{
 
@@ -12,26 +17,30 @@ class Scanner{
     int start=0;
     int current=0;
     int line=1;
-std::map<string,TokenType> keywords;
+static std::unordered_map<std::string,TokenType> keywords;
 
-    bool is_at_end() const();
-    void scan_token();
+bool is_at_end();
+bool match(char expected);
+char advance();
+char peek() ;
+char peek_next();
 
 void scan_token();
-bool match(char expected);
 void addToken(TokenType Type, Object literal );
 void addToken(TokenType Type);
-char advance();
-char peek();
+
+
 void string();
-bool is_digit();
+bool is_digit(char c);
 void number();
-char peek_next();
+void identifier();
+bool is_alpha(char c);
+bool is_alpha_numeric(char c);
 
 public:
 
 explicit Scanner(std::string source);
-
 std::vector<Token> scan_tokens();
 
-}
+
+};

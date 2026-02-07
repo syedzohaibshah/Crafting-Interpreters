@@ -1,9 +1,11 @@
 #include"Scanner.h"
 #include<utility>
+#include<string.h>
+#include <cassert>
+#include <iostream>
+#include <variant>
 
-
-
-std::unordered_map<std::string, token_type> Scanner::keywords = {
+std::unordered_map<std::string, TokenType> Scanner::keywords = {
     {"and", AND},
     {"class", CLASS},
     {"else", ELSE},
@@ -39,17 +41,17 @@ std::vector<Token> Scanner::scan_tokens(){
         scan_token();
 
     }
-    tokens.emplace_back(TokenType::END_OF_FILE,"",NULL,line));
+    tokens.emplace_back(TokenType::END_OF_FILE,"",std::monostate{},line);
     return tokens;
 
 }
 
-Scanner:: bool is_at_end(){
+ bool Scanner::is_at_end(){
 
     return current>=source.size();
 }
 
-Scanner :: void scan_token(){
+ void Scanner :: scan_token(){
 
 
     char c=advance();
@@ -79,7 +81,7 @@ Scanner :: void scan_token(){
         case '/':  //handle single line commnet
         if (match('/')) {
           // A comment goes until the end of the line.
-          while (peek() != '\n' && !isAtEnd()) advance();
+          while (peek() != '\n' && !is_at_end()) advance();
         } else {
           addToken(SLASH);
         }
@@ -97,20 +99,24 @@ Scanner :: void scan_token(){
           break;
 
         case '"': string(); break;   // handle when string start
-
+        case 'o':
+          if (match('r')) {
+            addToken(OR);
+          }
+          break;
 
 
 
 
         default:
 
-        if(is_digit()){
+        if(is_digit(c)){
             number();
-        }else if(is_alpha()){
+        }else if(is_alpha(c)){
             identifier();
         }
         else{
-            Lox.error(line,"Unexpected character.");
+            Lox::error(line,"Unexpected character.");
         }
 
         break;
@@ -118,25 +124,25 @@ Scanner :: void scan_token(){
 
 }
 //consumes the next character in the source file and returns it.
-Scanner:: char advance(){
+char  Scanner:: advance(){
 
     return source.at(current++);
 }
 
-Scanner :: void addToken(TokenType Type){
+  void  Scanner ::addToken(TokenType Type){
 
-    return addToken(type,NULL);
+  addToken(Type,std::monostate{});
 }
 //overloading for literal
-Scanner:: void addToken(TokenType Type, Object literal ){
+void Scanner::  addToken(TokenType Type, Object literal ){
 
     std::string text=source.substr(start,current-start);
-    tokens.emplace_back(type,text,literal,line);
+    tokens.emplace_back(Type,text,literal,line);
 
 }
 
 
-Scanner:: bool match(char expected){
+bool  Scanner:: match(char expected){
 
     if(is_at_end()) return false;
     if(source.at(current)!=expected) return false;
@@ -148,23 +154,23 @@ Scanner:: bool match(char expected){
 }
 
 
-Scanner:: char peek(){
+ char  Scanner::peek(){
 
     if(is_at_end())  return '\0';
 
     return source.at(current);
 }
 
-Scanner :: void string(){
+void Scanner ::  string(){
 
-    while(peek()!='"' && is_at_end()){
+    while(peek()!='"' && !is_at_end()){
         if(peek()=='\n') line++;
         advance();
     }
 
-    if(is_At_end()){
+    if(is_at_end()){
 
-        Lox.error(line,"unterminated string.");
+        Lox::error(line,"unterminated string.");
         return;
     }
 
@@ -172,7 +178,7 @@ Scanner :: void string(){
       advance();
 
 
-      string value=source.substr(start+1,current-1);
+     std::string value=source.substr(start+1,current-start-2);
       addToken(STRING,value);
 
 
@@ -181,13 +187,13 @@ Scanner :: void string(){
 }
 
 
-Scanner:: bool is_digit(char c){
+ bool Scanner:: is_digit(char c){
 
     return c>='0' && c<='9';
 
 }
 
-Scanner:: void number(){
+void Scanner::  number(){
 
 
     while(is_digit(peek()))  advance();
@@ -198,11 +204,11 @@ Scanner:: void number(){
      while(is_digit(peek()))  advance();
     }
 
-    add_token(NUMBER,std::stod(source.substr(start,current)));
+    addToken(NUMBER,std::stod(source.substr(start,current-start)));
 
 }
 
-Scanner char peek_next(){
+char  Scanner::peek_next(){
 
     if(current+1>=source.size()) return '\0';
 
@@ -210,23 +216,29 @@ Scanner char peek_next(){
 }
 
 
-Scanner::void identifier(){
+void Scanner:: identifier(){
     while(is_alpha_numeric(peek())) advance();
+std::string text=source.substr(start,current-start);
 
-    addToken(IDENTIFIER);
+auto it =keywords.find(text);  //find in keywords map
+
+TokenType Type=(it!=keywords.end())? it->second:IDENTIFIER;
+
+
+addToken(Type);
 
 }
 
-Scanner:: bool is_alpha(char c){
+ bool  Scanner::is_alpha(char c){
 
-    return c>='a' && c<='z' ||
-    c>='A' && c<='Z'||
+    return (c>='a' && c<='z' )||
+    (c>='A' && c<='Z')||
     c=='_';
 
 }
 
 
-Scanner :: bool is_alpha_numeric(char c){
+ bool Scanner :: is_alpha_numeric(char c){
 
-    return is_alpha() || is_digit();
+    return is_alpha(c) || is_digit(c);
 }

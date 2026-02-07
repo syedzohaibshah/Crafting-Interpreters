@@ -1,16 +1,24 @@
+
+#include "Lox.h"
+#include "Scanner.h"
+#include "Token.h"
+
 #include<iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <stdexcept>
+#include <cstdlib>
+#include<vector>
 
-#include "Lox.hpp"
+
+bool Lox::had_error = false;
 
 
 
+void Lox::run_file(const std::string & path){
 
-
-
-
-void Lox::run_file(const std::string& path){
-
-    std:ifstream file(path,std::ios::binary);  //read the file as raw bytes
+    std::ifstream file(path,std::ios::binary);  //read the file as raw bytes
     if(!file){
         throw std::runtime_error("could not open file "+path);
     }
@@ -19,13 +27,13 @@ void Lox::run_file(const std::string& path){
     buffer<<file.rdbuf();  //read entire file    //Copies everything from the file buffer into ostringstream buffer
     run(buffer.str());
     // Indicate an error in the exit code.
-    if (hadError) System.exit(65);
+    if (had_error) std::exit(65);
 
 }
 
-void Lox::run_promt(){
+void Lox::run_prompt(){
 
-    std: string line;
+    std:: string line;
     while(true){
 
         std::cout<<"> ";
@@ -33,7 +41,7 @@ void Lox::run_promt(){
             break;
         }
         run(line);
-        hadError = false;
+        had_error = false;
     }
 
 

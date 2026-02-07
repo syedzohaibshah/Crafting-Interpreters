@@ -2,16 +2,14 @@
 #include<string>
 #include <variant>
 
-
+#include"TokenType.h"
 
 std::string Token::toString() const{
-
-    return std::to_string(static_cast<int>(type))+" "+
-    lexeme+" "+literal_to_string(literal);
-
+    return tokenTypeToString(type)+" "+lexeme+" "+literal_to_string(literal);
 }
 
-std::string literal_to_string(const Object &value){
+
+std::string Token::literal_to_string(const Object &value) const{
 
     if(std::holds_alternative<std::monostate>(value))
         return "nil";
@@ -24,4 +22,10 @@ std::string literal_to_string(const Object &value){
 
 
     return "";
+}
+
+
+std::ostream& operator<<(std::ostream& os, const Token& token) {
+    os << token.toString();
+    return os;
 }

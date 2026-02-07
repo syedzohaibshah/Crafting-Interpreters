@@ -1,23 +1,22 @@
 #include<iostream>
 #include<cstdlib>
-#include"lox.hpp"
-
-using namespace std;
+#include "Lox.h"
 
 
 int main(int argc, char* argv[]){
-
+Lox lox;
     if(argc>2){
-        cout<<"Usage clox [script]\n";
+        std::cout<<"Usage clox [script]\n";
         exit(64);
 
 
     }else if(argc==2){
 
-        Lox::run_file(argv[1]);
+        lox.run_file(argv[1]);
+
     }else{
 
-        Lox::run_promtp();
+        lox.run_prompt();
     }
 
 
