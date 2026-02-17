@@ -82,7 +82,20 @@ std::vector<Token> Scanner::scan_tokens(){
         if (match('/')) {
           // A comment goes until the end of the line.
           while (peek() != '\n' && !is_at_end()) advance();
-        } else {
+        }  else if (match('*')) {
+            while (!is_at_end()) {
+                if (peek() == '\n') line++;
+
+                if (peek() == '*' && peek_next() == '/') {
+                    advance(); // consume '*'
+                    advance(); // consume '/'
+                    break;
+                }
+
+                advance();
+            }
+        }
+        else{
           addToken(SLASH);
         }
         break;

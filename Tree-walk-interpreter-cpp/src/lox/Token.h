@@ -12,13 +12,13 @@ using enum TokenType;
 using Object= std::variant<std::monostate,double,std::string,bool>;  //(equivalent to java object) can hold one value from a fixed set of types, but only one at a time.
 
 class Token{
-
+public:
     const TokenType type;
-    const std::string lexeme;
+    public: const std::string lexeme;
     const Object literal;
     const int line;
 
-    public:
+    
     Token(TokenType type,
         std::string lexeme,
         Object literal,
