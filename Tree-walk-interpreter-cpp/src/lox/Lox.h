@@ -1,5 +1,14 @@
-#pragma once 
+#pragma once
 #include<string>
+
+#include "Lox.h"
+#include "Scanner.h"
+#include "Token.h"
+#include "Expr.h"
+#include "AstPrinter.h"
+#include "Parser.h"
+#include <memory>
+#include <utility>
 
 class Lox{
 
@@ -14,5 +23,5 @@ void run(const std::string& source);
 
 static void error(int line,const std::string &message);
 static void report(int line , const std::string &where, const std::string &message );
+static  void error(const Token &token, const std::string &message);
 };
-

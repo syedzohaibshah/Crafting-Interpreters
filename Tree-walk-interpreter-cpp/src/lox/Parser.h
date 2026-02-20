@@ -6,6 +6,14 @@
 #include "Token.h"
 #include <memory>
 #include <initializer_list>
+#include "Lox.h"
+
+
+
+class ParseError : public std::runtime_error {
+public:
+    ParseError() : std::runtime_error("Parse error") {}
+};
 
 class Parser{
 
@@ -19,6 +27,8 @@ class Parser{
     bool is_at_end();
     Token peek();
     Token previous();
+    Token consume(TokenType type ,std::string message);
+    void synchronize();
 
     std::unique_ptr<Expr> primary();
     std::unique_ptr<Expr>  unary();
@@ -28,8 +38,10 @@ class Parser{
     std::unique_ptr<Expr> expression();
     std::unique_ptr<Expr> equality();
 
+
+     ParseError error(const Token & token,const std::string &message);
     public:
     Parser(std::vector<Token> &tokens):tokens(tokens){}
-
+std::unique_ptr<Expr> parse();
 
 };

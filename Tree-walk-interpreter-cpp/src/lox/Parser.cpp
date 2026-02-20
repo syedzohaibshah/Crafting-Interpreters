@@ -110,7 +110,7 @@ std::unique_ptr<Expr> Parser:: primary(){
 
     }
 
-
+throw error(peek(), "Expect expression.");
 
 }
 
@@ -156,3 +156,53 @@ Token Parser:: previous() {
 
    return tokens[current - 1];
  }
+ Token Parser :: consume(TokenType type,std::string message){
+
+     if(check(type)) return advance();
+
+     throw error(peek(),message);
+
+ }
+
+
+  ParseError Parser::error(const Token& token,const std::string &message){
+
+      Lox::error(token,message);
+      return ParseError();
+
+  }
+
+void Parser::synchronize() {
+    advance();
+
+    while (!is_at_end()) {
+      if (previous().type == SEMICOLON) return;
+
+      switch (peek().type) {
+        case CLASS:
+        case FUN:
+        case VAR:
+        case FOR:
+        case IF:
+        case WHILE:
+        case PRINT:
+        case RETURN:
+          return;
+      }
+
+      advance();
+    }
+  }
+
+
+  std::unique_ptr<Expr> Parser::parse(){
+
+
+      try{
+          return Parser::expression();
+      }catch(ParseError &){
+
+        Parser::synchronize();
+        return nullptr;
+      }
+  }

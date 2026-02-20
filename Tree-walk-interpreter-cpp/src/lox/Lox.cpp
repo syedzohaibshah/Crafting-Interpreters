@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include<vector>
-
+#include "TokenType.h"
 
 bool Lox::had_error = false;
 
@@ -53,12 +53,12 @@ void Lox::run(const std::string& source){
    Scanner scanner(source);
    std::vector<Token>tokens=scanner.scan_tokens();
 
+Parser parser(tokens);
+ std::unique_ptr<Expr>  expr = parser.parse();
 
-    for(const Token& token: tokens ){
-
-        std::cout<<token<<"\n";
-    }
-
+if(had_error) return;
+AstPrinter printer;
+std::cout<<printer.print(*expr)<<std::endl;
 
 }
 
@@ -67,6 +67,17 @@ void Lox::error(int line,const std::string &message){
     report(line,"",message);
 
 }
+
+
+void Lox:: error(const Token &token, const std::string &message) {
+
+   if (token.type ==TokenType::END_OF_FILE) {
+     report(token.line, " at end", message);
+   } else {
+     report(token.line, " at '" + token.lexeme + "'", message);
+   }
+ }
+
 
 void Lox::report(int line , const std::string &where, const std::string &message ){
 
