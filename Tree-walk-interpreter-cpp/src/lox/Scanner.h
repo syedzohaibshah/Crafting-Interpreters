@@ -39,7 +39,7 @@ bool is_alpha_numeric(char c);
 
 public:
 
-explicit Scanner(std::string source);
+ Scanner(std::string source);
 std::vector<Token> scan_tokens();
 
 
