@@ -1,7 +1,7 @@
 #pragma once
 #include<string>
 
-#include "Lox.h"
+
 #include "Scanner.h"
 #include "Token.h"
 #include "Expr.h"
