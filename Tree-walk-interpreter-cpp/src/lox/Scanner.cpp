@@ -66,6 +66,8 @@ std::vector<Token> Scanner::scan_tokens(){
         case '+': addToken(PLUS); break;
         case ';': addToken(SEMICOLON); break;
         case '*': addToken(STAR); break;
+        case '?': addToken(TokenType::QUESTION); break;
+        case ':': addToken(TokenType::COLON); break;
         case '!':
           addToken(match('=') ? BANG_EQUAL : BANG);
           break;

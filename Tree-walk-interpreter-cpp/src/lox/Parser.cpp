@@ -5,9 +5,30 @@
 #include "Lox.h"
 std::unique_ptr<Expr> Parser::expression(){
 
-     return equality();
+     return conditional();
  }
-
+ std::unique_ptr<Expr> Parser::conditional() {
+     auto expr = equality();
+ 
+     if (match({TokenType::QUESTION})) {
+         auto thenBranch = expression();
+ 
+         consume(TokenType::COLON,
+                 "Expect ':' after then branch.");
+ 
+         auto elseBranch = conditional(); // RIGHT associative
+ 
+         expr = std::make_unique<Conditional>(
+             std::move(expr),
+             std::move(thenBranch),
+             std::move(elseBranch)
+         );
+     }
+ 
+     return expr;
+ }
+ 
+ 
 std::unique_ptr<Expr> Parser::equality(){
     auto expr=comparison();
 

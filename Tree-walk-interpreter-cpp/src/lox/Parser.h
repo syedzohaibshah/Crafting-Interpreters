@@ -37,7 +37,7 @@ class Parser{
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> expression();
     std::unique_ptr<Expr> equality();
-
+    std::unique_ptr<Expr> conditional();
 
      ParseError error(const Token & token,const std::string &message);
     public:

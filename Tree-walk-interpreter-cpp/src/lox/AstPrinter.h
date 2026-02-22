@@ -35,7 +35,9 @@ public:
     std::any visitUnaryExpr(const Unary& expr) override {
         return parenthesize(expr.op.lexeme, {expr.right.get()});
     }
-
+    std::any visitConditionalExpr(const Conditional& expr) override {
+        return parenthesize("Conditional",{expr.condition.get(),expr.thenBranch.get(),expr.elseBranch.get()});
+    }
 private:
     std::string parenthesize(const std::string& name,
                              std::initializer_list<const Expr*> exprs) {

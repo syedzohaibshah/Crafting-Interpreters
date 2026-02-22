@@ -9,6 +9,7 @@ class Binary;
 class Grouping;
 class Literal;
 class Unary;
+class Conditional;
 
 // Visitor interface
 class ExprVisitor {
@@ -17,6 +18,7 @@ public:
     virtual std::any visitGroupingExpr(const Grouping& expr) = 0;
     virtual std::any visitLiteralExpr(const Literal& expr) = 0;
     virtual std::any visitUnaryExpr(const Unary& expr) = 0;
+    virtual std::any visitConditionalExpr(const Conditional &expr )=0;
     virtual ~ExprVisitor() = default;
 };
 
@@ -75,4 +77,22 @@ public:
     std::any accept(ExprVisitor& visitor) const override {
         return visitor.visitUnaryExpr(*this);
     }
+};
+//ternary operator a?b:c
+class Conditional : public Expr {
+public:
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Expr> thenBranch;
+    std::unique_ptr<Expr> elseBranch;
+
+    Conditional(std::unique_ptr<Expr> condition,
+                std::unique_ptr<Expr> thenBranch,
+                std::unique_ptr<Expr> elseBranch)
+        : condition(std::move(condition)),
+          thenBranch(std::move(thenBranch)),
+          elseBranch(std::move(elseBranch)) {}
+
+          std::any accept(ExprVisitor& visitor) const override {
+              return visitor.visitConditionalExpr(*this);
+          }
 };
