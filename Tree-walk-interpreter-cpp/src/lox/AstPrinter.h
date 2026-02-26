@@ -12,15 +12,15 @@ public:
         return std::any_cast<std::string>(expr.accept(*this));
     }
 
-    std::any visitBinaryExpr(const Binary& expr) override {
+    VisitorReturn visitBinaryExpr(const Binary& expr) override {
         return parenthesize(expr.op.lexeme, {expr.left.get(), expr.right.get()});
     }
 
-    std::any visitGroupingExpr(const Grouping& expr) override {
+     VisitorReturn visitGroupingExpr(const Grouping& expr) override {
         return parenthesize("group", {expr.expression.get()});
     }
 
-    std::any visitLiteralExpr(const Literal& expr) override {
+    VisitorReturn visitLiteralExpr(const Literal& expr) override {
         if (std::holds_alternative<std::monostate>(expr.value))
             return std::string("nil");
         if (std::holds_alternative<double>(expr.value))
@@ -32,10 +32,10 @@ public:
         return std::string("");
     }
 
-    std::any visitUnaryExpr(const Unary& expr) override {
+    VisitorReturn visitUnaryExpr(const Unary& expr) override {
         return parenthesize(expr.op.lexeme, {expr.right.get()});
     }
-    std::any visitConditionalExpr(const Conditional& expr) override {
+    VisitorReturn visitConditionalExpr(const Conditional& expr) override {
         return parenthesize("Conditional",{expr.condition.get(),expr.thenBranch.get(),expr.elseBranch.get()});
     }
 private:

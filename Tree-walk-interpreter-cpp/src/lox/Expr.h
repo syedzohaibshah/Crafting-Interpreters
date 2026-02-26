@@ -1,9 +1,9 @@
 #pragma once
 #include "Token.h"
-#include <any>
+
 #include <memory>
 #include <utility>
-
+#include<variant>
 // Forward declarations
 class Binary;
 class Grouping;
@@ -11,21 +11,24 @@ class Literal;
 class Unary;
 class Conditional;
 
+
+using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
+
 // Visitor interface
 class ExprVisitor {
 public:
-    virtual std::any visitBinaryExpr(const Binary& expr) = 0;
-    virtual std::any visitGroupingExpr(const Grouping& expr) = 0;
-    virtual std::any visitLiteralExpr(const Literal& expr) = 0;
-    virtual std::any visitUnaryExpr(const Unary& expr) = 0;
-    virtual std::any visitConditionalExpr(const Conditional &expr )=0;
+    virtual VisitorReturn visitBinaryExpr(const Binary& expr) = 0;
+    virtual VisitorReturn visitGroupingExpr(const Grouping& expr) = 0;
+    virtual VisitorReturn visitLiteralExpr(const Literal& expr) = 0;
+    virtual VisitorReturn visitUnaryExpr(const Unary& expr) = 0;
+    virtual VisitorReturn visitConditionalExpr(const Conditional &expr )=0;
     virtual ~ExprVisitor() = default;
 };
 
 // Base class
 class Expr {
 public:
-    virtual std::any accept(ExprVisitor& visitor) const = 0;
+    virtual VisitorReturn accept(ExprVisitor& visitor) const = 0;
     virtual ~Expr() = default;
 };
 
@@ -38,7 +41,7 @@ public:
     Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
         : left(std::move(left)), op(std::move(op)), right(std::move(right)) {}
 
-    std::any accept(ExprVisitor& visitor) const override {
+    VisitorReturn accept(ExprVisitor& visitor) const override {
         return visitor.visitBinaryExpr(*this);
     }
 };
@@ -50,7 +53,7 @@ public:
     explicit Grouping(std::unique_ptr<Expr> expression)
         : expression(std::move(expression)) {}
 
-    std::any accept(ExprVisitor& visitor) const override {
+    VisitorReturn accept(ExprVisitor& visitor) const override {
         return visitor.visitGroupingExpr(*this);
     }
 };
@@ -61,7 +64,7 @@ public:
 
     explicit Literal(Object value) : value(std::move(value)) {}
 
-    std::any accept(ExprVisitor& visitor) const override {
+    VisitorReturn accept(ExprVisitor& visitor) const override {
         return visitor.visitLiteralExpr(*this);
     }
 };
@@ -74,7 +77,7 @@ public:
     Unary(Token op, std::unique_ptr<Expr> right)
         : op(std::move(op)), right(std::move(right)) {}
 
-    std::any accept(ExprVisitor& visitor) const override {
+    VisitorReturn accept(ExprVisitor& visitor) const override {
         return visitor.visitUnaryExpr(*this);
     }
 };
@@ -92,7 +95,7 @@ public:
           thenBranch(std::move(thenBranch)),
           elseBranch(std::move(elseBranch)) {}
 
-          std::any accept(ExprVisitor& visitor) const override {
+          VisitorReturn accept(ExprVisitor& visitor) const override {
               return visitor.visitConditionalExpr(*this);
           }
 };
