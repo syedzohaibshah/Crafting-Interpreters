@@ -178,6 +178,9 @@ Token Parser:: previous() {
 
    return tokens[current - 1];
  }
+ 
+ 
+ 
  Token Parser :: consume(TokenType type,std::string message){
 
      if(check(type)) return advance();

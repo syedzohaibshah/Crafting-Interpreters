@@ -26,8 +26,10 @@ void Lox::run_file(const std::string & path){
     std::ostringstream buffer; //output string stream buffer
     buffer<<file.rdbuf();  //read entire file    //Copies everything from the file buffer into ostringstream buffer
     run(buffer.str());
+
     // Indicate an error in the exit code.
     if (had_error) std::exit(65);
+    if(had_runtime_error)::std::exit(70);
 
 }
 
@@ -57,8 +59,12 @@ Parser parser(tokens);
  std::unique_ptr<Expr>  expr = parser.parse();
 
 if(had_error) return;
-AstPrinter printer;
-std::cout<<printer.print(*expr)<<std::endl;
+
+
+// AstPrinter printer;
+// std::cout<<printer.print(*expr)<<std::endl;
+//
+interpreter.interpret(expr);
 
 }
 
@@ -84,4 +90,10 @@ void Lox::report(int line , const std::string &where, const std::string &message
     std::cerr<<"[line "<<line<<"] Error"<<where<<": "<<message;
     had_error=true;
 
+}
+void Lox::runtimeError(const RuntimeError & error){
+
+
+    std::cerr<<error.what()+ "\n[line " + error.token.line + "]";
+    had_runtime_error = true;
 }

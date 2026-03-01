@@ -5,6 +5,7 @@
 
 class Interpreter: public ExprVisitor{
 
+    public:
     VisitorReturn visitLiteralExpr(const Literal& expr ) override{
 
         return expr.value;
@@ -18,10 +19,7 @@ class Interpreter: public ExprVisitor{
     }
 
 
-    Object evaluate(const Expr & expr) {
 
-        return std::get<Object>(expr.accept(*this));
-    }
 
 
    VisitorReturn visitUnaryExpr(const Unary &expr){
@@ -72,10 +70,13 @@ everything else → true
 
 
             case MINUS:
+              check_numbered_operand(expr.op,left,right);
               return std::get<double>(left) - std::get<double>(right);
             case SLASH:
+                check_numbered_operand(expr.op,left,right);
                 return  std::get<double>(left) / std::get<double>(right);
             case STAR:
+                check_numbered_operand(expr.op,left,right);
                 return std::get<double>(left) * std::get<double>(right);
 
             // + for adding doubles and + for string concatination
@@ -86,14 +87,20 @@ everything else → true
                if(std::holds_alternative<std::string>(left) && std::holds_alternative<std::string>(right)){
                    return std::get<std::string>(left) + std::get<std::string>(right);
                }
+               
+               throw RuntimeError(expr.op,"Operator must be two numbers or two strings");
                break;
             case GREATER:
+                check_numbered_operand(expr.op,left,right);
                 return std::get<double>(left)> std::get<double>(right);
             case GREATER_EQUAL:
+                check_numbered_operand(expr.op,left,right);
                 return std::get<double>(left)>= std::get<double>(right);
             case LESS:
+                check_numbered_operand(expr.op,left,right);
                 return std::get<double>(left) < std:get<double>(right);
             case LESS_EQUAL:
+                check_numbered_operand(expr.op,left,right);
                 return std::get<double>(left) < std::get<double>(right);
 
             //equality operators support operands of any type, even mixed ones.
@@ -123,5 +130,57 @@ everything else → true
 
 
     }
+
+    
+    void interpret(const Expr & expr){
+        
+        try{
+            Object value=evaluate(expr);
+            std::cout<<stringify(value);
+        }catch(const Runtime &error){
+        
+        Lox::runtimeError(error);
+        
+    }
+        
+       private:
+      
+       //check the operand type first before evaluating
+       void check_numbered_operand(const Token & op,const Object & left, const Object & right){
+           
+           if(std::holds_alternative<double>(right) && std::holds_alternative<double>(left) ) return;
+           
+           throw RuntimeError(op,"operator must be numbers");
+           
+       }
+        
+       Object evaluate(const Expr & expr) {
+   
+           return std::get<Object>(expr.accept(*this));
+       }
+    
+       //
+       std::string stringify(const Object & object){
+           
+           if (object==nullptr)  return "nil";
+           
+           if(std::holds_alternative<double>(object)){
+               
+               std::string text=to_string(object);
+               if(text.ends_with(".0")){
+                   
+                   text=text.substr(0,text.size()-2);
+                   
+               }
+               return text;
+           }
+           
+           return to_string(object);
+       }
+       
+       
+       
+    
+    
 
 };
