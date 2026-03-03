@@ -14,6 +14,7 @@
 
 bool Lox::had_error = false;
 
+bool Lox::had_runtime_error = false;
 
 
 void Lox::run_file(const std::string & path){
@@ -64,7 +65,9 @@ if(had_error) return;
 // AstPrinter printer;
 // std::cout<<printer.print(*expr)<<std::endl;
 //
-interpreter.interpret(expr);
+
+static Interpreter interpreter; 
+interpreter.interpret(*expr);
 
 }
 
@@ -94,6 +97,6 @@ void Lox::report(int line , const std::string &where, const std::string &message
 void Lox::runtimeError(const RuntimeError & error){
 
 
-    std::cerr<<error.what()+ "\n[line " + error.token.line + "]";
+    std::cerr<<error.what()<<"\n[line "<<error.token.line<<"]\n";
     had_runtime_error = true;
 }

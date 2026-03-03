@@ -1,0 +1,137 @@
+#include "Interpreter.h"
+#include "RuntimeError.h"
+#include "Token.h"
+#include "Lox.h"
+#include <iostream>
+#include <variant>
+
+void Interpreter::check_numbered_operand(const Token& op, const Object& left, const Object& right) {
+    if (std::holds_alternative<double>(right) && std::holds_alternative<double>(left)) return;
+    throw RuntimeError(op, "operator must be numbers");
+}
+//important
+Object Interpreter::evaluate(const Expr& expr) {
+    return std::get<Object>(expr.accept(*this));
+}
+
+std::string Interpreter::stringify(const Object& object) {
+    if (std::holds_alternative<std::monostate>(object)) return "nil";
+
+    if (std::holds_alternative<double>(object)) {
+        std::string text = std::to_string(std::get<double>(object));
+        if (text.ends_with(".0")) {
+            text = text.substr(0, text.size() - 2);
+        }
+        return text;
+    }
+
+    if (std::holds_alternative<std::string>(object)) {
+        return std::get<std::string>(object);
+    }
+
+    if (std::holds_alternative<bool>(object)) {
+        return std::get<bool>(object) ? "true" : "false";
+    }
+
+    throw std::runtime_error("Unexpected object type");
+}
+
+
+
+
+bool Interpreter::isTruthy(const Object& object) {
+    if (std::holds_alternative<std::monostate>(object)) return false;
+    if (std::holds_alternative<bool>(object)) return std::get<bool>(object);
+    return true;
+}
+
+bool Interpreter::isEqual(const Object& a, const Object& b) {
+    if (std::holds_alternative<std::monostate>(a) && std::holds_alternative<std::monostate>(b)) return true;
+    if (std::holds_alternative<std::monostate>(a)) return false;
+    return a == b;
+}
+
+VisitorReturn Interpreter::visitLiteralExpr(const Literal& expr) {
+    return expr.value;
+}
+
+VisitorReturn Interpreter::visitGroupingExpr(const Grouping& expr) {
+    return evaluate(*expr.expression);
+}
+
+VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
+    Object right = evaluate(*expr.right);
+
+    switch (expr.op.type) {
+        case BANG:
+            return !isTruthy(right);
+        case MINUS:
+            return -std::get<double>(right);
+        default: break;
+    }
+
+    return std::monostate{};
+}
+
+VisitorReturn Interpreter::visitBinaryExpr(const Binary& expr) {
+    Object left = evaluate(*expr.left);
+    Object right = evaluate(*expr.right);
+
+    switch (expr.op.type) {
+        case MINUS:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) - std::get<double>(right);
+        case SLASH:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) / std::get<double>(right);
+        case STAR:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) * std::get<double>(right);
+        case PLUS:
+            if (std::holds_alternative<double>(left) && std::holds_alternative<double>(right)) {
+                return std::get<double>(left) + std::get<double>(right);
+            }
+            if (std::holds_alternative<std::string>(left) && std::holds_alternative<std::string>(right)) {
+                return std::get<std::string>(left) + std::get<std::string>(right);
+            }
+            throw RuntimeError(expr.op, "Operator must be two numbers or two strings");
+        case GREATER:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) > std::get<double>(right);
+        case GREATER_EQUAL:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) >= std::get<double>(right);
+        case LESS:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) < std::get<double>(right);
+        case LESS_EQUAL:
+            check_numbered_operand(expr.op, left, right);
+            return std::get<double>(left) <= std::get<double>(right);
+        case BANG_EQUAL:
+            return !isEqual(left, right);
+        case EQUAL_EQUAL:
+            return isEqual(left, right);
+        default: break;
+    }
+    return std::monostate{};
+}
+
+VisitorReturn Interpreter::visitConditionalExpr(const Conditional& expr) {
+    Object condition = evaluate(*expr.condition);
+
+    if (isTruthy(condition)) {
+        return evaluate(*expr.thenBranch);
+    } else {
+        return evaluate(*expr.elseBranch);
+    }
+}
+
+
+void Interpreter::interpret(const Expr& expr) {
+    try {
+        Object value = evaluate(expr);
+        std::cout << stringify(value);
+    } catch (const RuntimeError& error) {
+        Lox::runtimeError(error);
+    }
+}

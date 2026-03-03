@@ -14,12 +14,11 @@
 
 class Lox{
 
-    static const Interpreter interpreter;
+  
     public:
     
-static bool had_error=false;
-static bool had_runtime_error=false;
-
+static bool had_error;
+static bool had_runtime_error;
 void run_prompt();
 void run_file(const std::string &path);
 void run(const std::string& source);
