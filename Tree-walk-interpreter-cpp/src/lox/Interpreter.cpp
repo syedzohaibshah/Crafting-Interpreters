@@ -19,8 +19,8 @@ std::string Interpreter::stringify(const Object& object) {
 
     if (std::holds_alternative<double>(object)) {
         std::string text = std::to_string(std::get<double>(object));
-        if (text.ends_with(".0")) {
-            text = text.substr(0, text.size() - 2);
+        if (text.ends_with(".000000")) {
+            text = text.substr(0, text.size() - 7);
         }
         return text;
     }
@@ -80,37 +80,46 @@ VisitorReturn Interpreter::visitBinaryExpr(const Binary& expr) {
     switch (expr.op.type) {
         case MINUS:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) - std::get<double>(right);
+            return Object{std::get<double>(left) - std::get<double>(right)};
         case SLASH:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) / std::get<double>(right);
+            if(std::get<double>(right)==0){
+                 throw RuntimeError(expr.op, "divsion by ZERO");
+            }
+            return Object{std::get<double>(left) / std::get<double>(right)};
         case STAR:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) * std::get<double>(right);
+            return Object{std::get<double>(left) * std::get<double>(right)};
         case PLUS:
             if (std::holds_alternative<double>(left) && std::holds_alternative<double>(right)) {
-                return std::get<double>(left) + std::get<double>(right);
+                return Object{std::get<double>(left) + std::get<double>(right)};
             }
             if (std::holds_alternative<std::string>(left) && std::holds_alternative<std::string>(right)) {
-                return std::get<std::string>(left) + std::get<std::string>(right);
+                return Object{std::get<std::string>(left) + std::get<std::string>(right)}       ;
+            }
+            if (std::holds_alternative<double>(left) && std::holds_alternative<std::string>(right)) {
+                return Object{stringify(left)+ std::get<std::string>(right)};
+            }
+            if (std::holds_alternative<std::string>(left) && std::holds_alternative<double>(right)) {
+                return Object{std::get<std::string>(left) + stringify(right)};
             }
             throw RuntimeError(expr.op, "Operator must be two numbers or two strings");
         case GREATER:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) > std::get<double>(right);
+            return Object{std::get<double>(left) > std::get<double>(right)};
         case GREATER_EQUAL:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) >= std::get<double>(right);
+            return Object{std::get<double>(left) >= std::get<double>(right)};
         case LESS:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) < std::get<double>(right);
+            return Object{std::get<double>(left) < std::get<double>(right)};
         case LESS_EQUAL:
             check_numbered_operand(expr.op, left, right);
-            return std::get<double>(left) <= std::get<double>(right);
+            return Object{std::get<double>(left) <= std::get<double>(right)};
         case BANG_EQUAL:
-            return !isEqual(left, right);
+            return Object{!isEqual(left, right)};
         case EQUAL_EQUAL:
-            return isEqual(left, right);
+            return Object{isEqual(left, right)};
         default: break;
     }
     return std::monostate{};
