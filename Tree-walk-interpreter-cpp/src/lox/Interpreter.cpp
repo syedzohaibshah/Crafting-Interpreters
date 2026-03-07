@@ -136,11 +136,29 @@ VisitorReturn Interpreter::visitConditionalExpr(const Conditional& expr) {
 }
 
 
-void Interpreter::interpret(const Expr& expr) {
+void Interpreter::interpret(std::vector<std::unique_ptr<Stmt>> &statements) {
     try {
-        Object value = evaluate(expr);
-        std::cout << stringify(value);
+        for(const auto & stmt:statements){
+            execute(*stmt);
+        }
     } catch (const RuntimeError& error) {
         Lox::runtimeError(error);
     }
+}
+
+
+void Interpreter:: execute(const Stmt &stmt){
+    stmt.accept(*this);
+}
+
+void Interpreter::visitExpressionStmt(const Expression & stmt){
+
+    evaluate(*stmt.expression);
+
+}
+
+void Interpreter::visitPrintStmt(const Print & stmt){
+
+    Object value=evaluate(*stmt.expression);
+    std::cout<<stringify(value);
 }

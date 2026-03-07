@@ -9,26 +9,26 @@ std::unique_ptr<Expr> Parser::expression(){
  }
  std::unique_ptr<Expr> Parser::conditional() {
      auto expr = equality();
- 
+
      if (match({TokenType::QUESTION})) {
          auto thenBranch = expression();
- 
+
          consume(TokenType::COLON,
                  "Expect ':' after then branch.");
- 
+
          auto elseBranch = conditional(); // RIGHT associative
- 
+
          expr = std::make_unique<Conditional>(
              std::move(expr),
              std::move(thenBranch),
              std::move(elseBranch)
          );
      }
- 
+
      return expr;
  }
- 
- 
+
+
 std::unique_ptr<Expr> Parser::equality(){
     auto expr=comparison();
 
@@ -123,6 +123,10 @@ std::unique_ptr<Expr> Parser:: primary(){
     if(match({NUMBER,STRING})){
         return std::make_unique<Literal>(previous().literal);
     }
+    
+    if (match(IDENTIFIER)) {
+      return std::make_unique<Variable>(previous());
+    }
 
     if(match({LEFT_PAREN})){
         auto expr=expression();
@@ -178,9 +182,9 @@ Token Parser:: previous() {
 
    return tokens[current - 1];
  }
- 
- 
- 
+
+
+
  Token Parser :: consume(TokenType type,std::string message){
 
      if(check(type)) return advance();
@@ -219,15 +223,71 @@ void Parser::synchronize() {
     }
   }
 
+//changed
+std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 
-  std::unique_ptr<Expr> Parser::parse(){
+        std::vector<std::unique_ptr<Stmt>>statements;
 
+        while(!is_at_end()){
 
-      try{
-          return Parser::expression();
-      }catch(ParseError &){
+            statements.push_back(declaration());
 
-        Parser::synchronize();
-        return nullptr;
-      }
+        }
+
+        return statements;
+
   }
+  
+  std::unique_ptr<Stmt> Parser:: declaration(){
+      
+      try{
+        if (match({VAR})) return declaration();
+        return statement();
+          
+      }catch(const ParseError &error ){
+          synchronize();
+          
+          return nullptr;
+      
+      
+      }
+      
+  }
+  
+ std::unique_ptr<Stmt>   Parser::varDeclaration(){
+     Token name=consume(IDENTIFIER,"expect varible name");
+     
+     
+    std::unique_ptr<Expr> initialzer =nullptr;
+     if(match(EQUAL)){
+         initialzer=expression();
+         
+     }
+     
+      consume(SEMICOLON, "Expect ';' after variable declaration.");
+      
+      return std::make_unique<Var>(name, std::move(initialzer));
+      
+  }
+
+std::unique_ptr<Stmt>  Parser::statement(){
+
+if(match({PRINT})) return print_statement();
+return expression_statement();
+  }
+
+
+std::unique_ptr<Stmt>  Parser::print_statement() {
+     auto value = expression();                        //what  are we  getting here?
+     consume(SEMICOLON, "Expect ';' after value.");
+     return  std::make_unique<Print>(std::move(value));
+
+   }
+
+
+
+std::unique_ptr<Stmt>  Parser::expression_statement() {
+     auto expr = expression();
+     consume(SEMICOLON, "Expect ';' after expression.");
+     return  std::make_unique<Expression>(std::move(expr));
+   }

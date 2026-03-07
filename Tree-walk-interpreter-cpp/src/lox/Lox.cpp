@@ -2,6 +2,8 @@
 #include "Lox.h"
 #include "Scanner.h"
 #include "Token.h"
+#include "Stmt.h"
+#include "TokenType.h"
 
 #include<iostream>
 #include <fstream>
@@ -10,7 +12,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include<vector>
-#include "TokenType.h"
+
 
 bool Lox::had_error = false;
 
@@ -57,7 +59,7 @@ void Lox::run(const std::string& source){
    std::vector<Token>tokens=scanner.scan_tokens();
 
 Parser parser(tokens);
- std::unique_ptr<Expr>  expr = parser.parse();
+std::vector<std::unique_ptr<Stmt>> statements= parser.parse();
 
 if(had_error) return;
 
@@ -66,8 +68,8 @@ if(had_error) return;
 // std::cout<<printer.print(*expr)<<std::endl;
 //
 
-static Interpreter interpreter; 
-interpreter.interpret(*expr);
+static Interpreter interpreter;
+interpreter.interpret(statements);
 
 }
 

@@ -10,11 +10,11 @@ class Grouping;
 class Literal;
 class Unary;
 class Conditional;
-
+class Variable;
 
 using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
 
-// Visitor interface
+// Expr Visitor interface
 class ExprVisitor {
 public:
     virtual VisitorReturn visitBinaryExpr(const Binary& expr) = 0;
@@ -22,6 +22,7 @@ public:
     virtual VisitorReturn visitLiteralExpr(const Literal& expr) = 0;
     virtual VisitorReturn visitUnaryExpr(const Unary& expr) = 0;
     virtual VisitorReturn visitConditionalExpr(const Conditional &expr )=0;
+    virtual  VisitorReturn visitVariable(/);
     virtual ~ExprVisitor() = default;
 };
 
@@ -98,4 +99,13 @@ public:
           VisitorReturn accept(ExprVisitor& visitor) const override {
               return visitor.visitConditionalExpr(*this);
           }
+};
+
+
+class Variable: public Expr{
+    
+    
+    
+    const Token name;
+    
 };

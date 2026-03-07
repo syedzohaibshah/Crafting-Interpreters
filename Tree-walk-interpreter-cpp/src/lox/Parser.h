@@ -7,7 +7,7 @@
 #include <memory>
 #include <initializer_list>
 #include "Lox.h"
-
+#include "Stmt.h"
 
 
 class ParseError : public std::runtime_error {
@@ -20,7 +20,7 @@ class Parser{
     std::vector<Token> tokens;
     int current=0;
 
-
+   //helpers
     bool match(std::initializer_list<TokenType> types);
     bool check(TokenType type);
     Token advance();
@@ -30,6 +30,14 @@ class Parser{
     Token consume(TokenType type ,std::string message);
     void synchronize();
 
+//Stmt
+std::unique_ptr<Stmt> varDeclaration();
+std::unique_ptr<Stmt>  declaration();
+std::unique_ptr<Stmt> statement();
+std::unique_ptr<Stmt> print_statement();
+std::unique_ptr<Stmt> expression_statement();
+
+ //Expr
     std::unique_ptr<Expr> primary();
     std::unique_ptr<Expr>  unary();
     std::unique_ptr<Expr> factor();
@@ -41,9 +49,11 @@ class Parser{
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> conditional();
 
+    
      ParseError error(const Token & token,const std::string &message);
+     
     public:
     Parser(std::vector<Token> &tokens):tokens(tokens){}
-std::unique_ptr<Expr> parse();
+std::vector<std::unique_ptr<Stmt>> parse();
 
 };
