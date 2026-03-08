@@ -22,7 +22,7 @@ public:
     virtual VisitorReturn visitLiteralExpr(const Literal& expr) = 0;
     virtual VisitorReturn visitUnaryExpr(const Unary& expr) = 0;
     virtual VisitorReturn visitConditionalExpr(const Conditional &expr )=0;
-    virtual  VisitorReturn visitVariable(/);
+    virtual  VisitorReturn visitVariableExpr(const Variable &expr);
     virtual ~ExprVisitor() = default;
 };
 
@@ -103,9 +103,12 @@ public:
 
 
 class Variable: public Expr{
-    
-    
-    
+    public:
     const Token name;
-    
+
+    Variable(Token name):name(name){}
+
+    VisitorReturn accept(ExprVisitor& visitor) const override {
+        return visitor.visitVariableExpr(*this);
+    }
 };

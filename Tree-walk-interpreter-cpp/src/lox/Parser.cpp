@@ -123,8 +123,8 @@ std::unique_ptr<Expr> Parser:: primary(){
     if(match({NUMBER,STRING})){
         return std::make_unique<Literal>(previous().literal);
     }
-    
-    if (match(IDENTIFIER)) {
+
+    if (match({IDENTIFIER})) {
       return std::make_unique<Variable>(previous());
     }
 
@@ -237,37 +237,37 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
         return statements;
 
   }
-  
+
   std::unique_ptr<Stmt> Parser:: declaration(){
-      
+
       try{
-        if (match({VAR})) return declaration();
+        if (match({VAR})) return varDeclaration();
         return statement();
-          
+
       }catch(const ParseError &error ){
           synchronize();
-          
+
           return nullptr;
-      
-      
+
+
       }
-      
+
   }
-  
+
  std::unique_ptr<Stmt>   Parser::varDeclaration(){
      Token name=consume(IDENTIFIER,"expect varible name");
-     
-     
+
+
     std::unique_ptr<Expr> initialzer =nullptr;
-     if(match(EQUAL)){
+     if(match({EQUAL})){
          initialzer=expression();
-         
+
      }
-     
+
       consume(SEMICOLON, "Expect ';' after variable declaration.");
-      
+
       return std::make_unique<Var>(name, std::move(initialzer));
-      
+
   }
 
 std::unique_ptr<Stmt>  Parser::statement(){
