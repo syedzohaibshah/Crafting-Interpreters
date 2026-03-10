@@ -73,6 +73,11 @@ VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
     return std::monostate{};
 }
 
+
+VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
+  return environment.get(*expr.name);
+}
+
 VisitorReturn Interpreter::visitBinaryExpr(const Binary& expr) {
     Object left = evaluate(*expr.left);
     Object right = evaluate(*expr.right);
@@ -161,4 +166,17 @@ void Interpreter::visitPrintStmt(const Print & stmt){
 
     Object value=evaluate(*stmt.expression);
     std::cout<<stringify(value);
+}
+
+void Interpreter::visitVarStm(const Var &stmt) {
+    
+    Object value = nullptr;
+        if (stmt.initializer != nullptr) {
+          value = evaluate(*stmt.initializer);
+        }
+    
+        environment.define(stmt.name.lexeme, value);
+        return nullptr;
+      }
+
 }

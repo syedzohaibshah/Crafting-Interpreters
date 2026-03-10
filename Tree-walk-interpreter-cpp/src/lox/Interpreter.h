@@ -9,6 +9,8 @@ class RuntimeError;
 
 class Interpreter : public ExprVisitor,public StmtVisitor {  //...
 private:
+Environment environment;
+
     void check_numbered_operand(const Token& op, const Object& left, const Object& right);
     Object evaluate(const Expr& expr);
     std::string stringify(const Object& object);
@@ -25,6 +27,6 @@ public:
 
     void visitExpressionStmt(const Expression & stmt)override;
     void visitPrintStmt(const Print & stmt) override;
-
+void visitVarStm(const Var &stmt) override;
     void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
 };
