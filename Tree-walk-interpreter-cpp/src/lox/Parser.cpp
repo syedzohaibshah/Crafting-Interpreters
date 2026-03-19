@@ -5,8 +5,33 @@
 #include "Lox.h"
 std::unique_ptr<Expr> Parser::expression(){
 
-     return conditional();
+     return   assignment();// conditional();
  }
+
+ std::unique_ptr<Expr> Parser::assignment() {
+     auto expr = conditional();
+
+     if (match({EQUAL})) {
+       Token equals = previous();
+       auto value = assignment();
+
+       if (auto var = dynamic_cast<Variable*>(expr.get())) {
+         Token name = var->name;
+
+         expr = std::make_unique<Assign>(
+             name,
+             std::move(value));
+
+         return expr;
+       }
+
+       error(equals, "Invalid assignment target.");
+     }
+
+     return expr;
+   }
+
+
  std::unique_ptr<Expr> Parser::conditional() {
      auto expr = equality();
 
@@ -217,6 +242,8 @@ void Parser::synchronize() {
         case PRINT:
         case RETURN:
           return;
+        default:
+              break;
       }
 
       advance();

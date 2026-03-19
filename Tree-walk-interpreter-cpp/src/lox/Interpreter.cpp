@@ -66,7 +66,10 @@ VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
         case BANG:
             return !isTruthy(right);
         case MINUS:
-            return -std::get<double>(right);
+            if (!std::holds_alternative<double>(right)) {
+                throw RuntimeError(expr.op, "Operand must be a number.");
+            }
+            return Object{-std::get<double>(right)};
         default: break;
     }
 
@@ -75,8 +78,14 @@ VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
 
 
 VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
-  return environment.get(*expr.name);
+  return environment.get(expr.name);
 }
+
+VisitorReturn Interpreter:: visitAssignExpr(const Assign & expr) {
+         Object value = evaluate(*expr.value);
+         environment.assign(expr.name, value);
+         return value;
+       }
 
 VisitorReturn Interpreter::visitBinaryExpr(const Binary& expr) {
     Object left = evaluate(*expr.left);
@@ -149,6 +158,9 @@ void Interpreter::interpret(std::vector<std::unique_ptr<Stmt>> &statements) {
     } catch (const RuntimeError& error) {
         Lox::runtimeError(error);
     }
+    catch (const std::exception& ex) {
+        std::cerr << "Interpreter internal error: " << ex.what() << '\n';
+    }
 }
 
 
@@ -165,18 +177,16 @@ void Interpreter::visitExpressionStmt(const Expression & stmt){
 void Interpreter::visitPrintStmt(const Print & stmt){
 
     Object value=evaluate(*stmt.expression);
-    std::cout<<stringify(value);
+    std::cout<<stringify(value)<<'\n';
 }
 
-void Interpreter::visitVarStm(const Var &stmt) {
-    
-    Object value = nullptr;
+void Interpreter::visitVarStmt(const Var &stmt) {
+
+    Object value = std::monostate{};
         if (stmt.initializer != nullptr) {
           value = evaluate(*stmt.initializer);
         }
-    
-        environment.define(stmt.name.lexeme, value);
-        return nullptr;
-      }
 
-}
+        environment.define(stmt.name.lexeme, value);
+
+      }

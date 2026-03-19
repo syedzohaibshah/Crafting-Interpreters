@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++20 -Wall -Wextra
 
 TARGET = lox
 
-SRCS = main.cpp Lox.cpp Parser.cpp Scanner.cpp Token.cpp Interpreter.cpp
+SRCS = main.cpp Lox.cpp Parser.cpp Scanner.cpp Token.cpp Interpreter.cpp Environment.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(TARGET)

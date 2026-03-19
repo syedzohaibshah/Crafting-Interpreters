@@ -9,7 +9,7 @@ class StmtVisitor{
     public:
    virtual  void visitPrintStmt(const Print& stmt)=0;
    virtual  void visitExpressionStmt(const Expression &stmt)=0;
-   virtual  void visitVariableStmt(const Var &visitor)=0;
+   virtual  void visitVarStmt(const Var &visitor)=0;
 
    virtual ~StmtVisitor()=default;
 };
@@ -67,11 +67,11 @@ public:
     const Token name;
 
     Var(Token name, std::unique_ptr<Expr> initializer)
-        : name(name), initializer(std::move(initializer)) {}
+        :  initializer(std::move(initializer)),name(name) {}
 
     void accept(StmtVisitor &visitor)const override{
 
-      visitor.visitVariableStmt(*this);
+      visitor.visitVarStmt(*this);
 
     }
 

@@ -11,6 +11,7 @@ class Literal;
 class Unary;
 class Conditional;
 class Variable;
+class Assign;
 
 using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
 
@@ -22,7 +23,8 @@ public:
     virtual VisitorReturn visitLiteralExpr(const Literal& expr) = 0;
     virtual VisitorReturn visitUnaryExpr(const Unary& expr) = 0;
     virtual VisitorReturn visitConditionalExpr(const Conditional &expr )=0;
-    virtual  VisitorReturn visitVariableExpr(const Variable &expr);
+    virtual VisitorReturn visitVariableExpr(const Variable &expr)=0;
+    virtual VisitorReturn visitAssignExpr(const Assign &expr)=0;
     virtual ~ExprVisitor() = default;
 };
 
@@ -112,3 +114,19 @@ class Variable: public Expr{
         return visitor.visitVariableExpr(*this);
     }
 };
+
+class Assign : public Expr {
+public:
+   const Token name;
+    std::unique_ptr<Expr> value;
+
+   Assign(const Token name,  std::unique_ptr<Expr> value)
+   :name(name),value(std::move(value)){}
+
+
+ VisitorReturn accept(ExprVisitor& visitor) const override {
+     return visitor.visitAssignExpr(*this);
+   }
+
+
+ };

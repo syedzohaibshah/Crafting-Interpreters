@@ -44,10 +44,13 @@ std::unique_ptr<Stmt> expression_statement();
     std::unique_ptr<Expr>  term();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> expression();
-
+ 
+   
     // these both are right associative all others are left
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> conditional();
+    
+    std::unique_ptr<Expr> assignment();
 
     
      ParseError error(const Token & token,const std::string &message);

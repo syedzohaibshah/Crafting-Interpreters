@@ -3,6 +3,8 @@
 #include"Stmt.h"
 #include <variant>
 #include <string>
+#include "Environment.h"
+
 
 class Token;
 class RuntimeError;
@@ -24,9 +26,11 @@ public:
     VisitorReturn visitUnaryExpr(const Unary& expr) override;
     VisitorReturn visitBinaryExpr(const Binary& expr) override;
     VisitorReturn visitConditionalExpr(const Conditional& expr) override;
+    VisitorReturn visitVariableExpr(const Variable &expr) override;
+    VisitorReturn visitAssignExpr(const Assign &expr) override;
 
     void visitExpressionStmt(const Expression & stmt)override;
     void visitPrintStmt(const Print & stmt) override;
-void visitVarStm(const Var &stmt) override;
+    void visitVarStmt(const Var &stmt) override;
     void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
 };
