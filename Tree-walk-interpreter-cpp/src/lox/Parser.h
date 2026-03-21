@@ -37,6 +37,8 @@ std::unique_ptr<Stmt> statement();
 std::unique_ptr<Stmt> print_statement();
 std::unique_ptr<Stmt> expression_statement();
 
+std::vector<std::unique_ptr<Stmt>> block();
+
  //Expr
     std::unique_ptr<Expr> primary();
     std::unique_ptr<Expr>  unary();
@@ -46,7 +48,7 @@ std::unique_ptr<Stmt> expression_statement();
     std::unique_ptr<Expr> expression();
  
    
-    // these both are right associative all others are left
+    // these  are right associative all others are left
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> conditional();
     

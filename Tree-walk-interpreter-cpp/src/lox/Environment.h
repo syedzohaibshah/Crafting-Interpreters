@@ -7,8 +7,14 @@
 
 class Environment{
     std::unordered_map<std::string,Object> values;
+    Environment enclosing;
 public:
-    Environment(){}
+    Environment(){
+        enclosing=nullptr;
+    }
+    Environment(Environment & enclosing) {
+      this->enclosing = enclosing;
+    }
 
     void define(std::string name,Object value);
     void assign(const Token name, const Object &value);

@@ -32,5 +32,10 @@ public:
     void visitExpressionStmt(const Expression & stmt)override;
     void visitPrintStmt(const Print & stmt) override;
     void visitVarStmt(const Var &stmt) override;
+    void visitBlockStmt(const Block & stmt) override;
+     
+    void executeBlock(std::vector<std::unique_ptr<Stmt>>  statements,
+                      Environment &environment) ;
+    
     void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
 };

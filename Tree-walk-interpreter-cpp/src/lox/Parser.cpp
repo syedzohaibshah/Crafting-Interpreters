@@ -300,6 +300,8 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 std::unique_ptr<Stmt>  Parser::statement(){
 
 if(match({PRINT})) return print_statement();
+if (match({LEFT_BRACE})) return std::make_unique<Block>(block());
+
 return expression_statement();
   }
 
@@ -317,4 +319,16 @@ std::unique_ptr<Stmt>  Parser::expression_statement() {
      auto expr = expression();
      consume(SEMICOLON, "Expect ';' after expression.");
      return  std::make_unique<Expression>(std::move(expr));
+   }
+
+   
+std::vector<std::unique_ptr<Stmt>> Parser::block() {
+     std::vector<std::unique_ptr<Stmt>> statements ;
+ 
+     while (!check(RIGHT_BRACE) && !is_at_end()) {
+       statements.push_back(declaration());
+     }
+ 
+     consume(RIGHT_BRACE, "Expect '}' after block.");
+     return statements;
    }

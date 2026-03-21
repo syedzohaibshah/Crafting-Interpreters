@@ -4,12 +4,14 @@
 class Expression;
 class Print;
 class Var;
+class Block ;
 
 class StmtVisitor{
     public:
    virtual  void visitPrintStmt(const Print& stmt)=0;
    virtual  void visitExpressionStmt(const Expression &stmt)=0;
-   virtual  void visitVarStmt(const Var &visitor)=0;
+   virtual  void visitVarStmt(const Var & stmt)=0;
+   virtual  void visitBlockStmt(const Block& stmt)=0;
 
    virtual ~StmtVisitor()=default;
 };
@@ -75,6 +77,23 @@ public:
 
     }
 
+
+
+};
+
+
+class Block :public  Stmt {
+    public:
+    std::vector<std::unique_ptr<Stmt>> statements;
+
+  Block( std::vector<std::unique_ptr<Stmt>> statements) {
+    this->statements = statements;
+  }
+
+
+void accept(StmtVisitor & visitor) const override{
+    return visitor.visitBlockStmt(*this);
+  }
 
 
 };

@@ -168,6 +168,28 @@ void Interpreter:: execute(const Stmt &stmt){
     stmt.accept(*this);
 }
 
+void Interpreter:: visitBlockStmt(const Block & stmt) {
+  executeBlock(stmt.statements, Environment(environment));
+  
+}
+
+
+void  Interpreter:: executeBlock(std::vector<std::unique_ptr<Stmt>>  statements,
+                  Environment & environment) {
+  Environment previous = this->environment;
+  try {
+    this->environment = environment;
+
+    for (Stmt statement : statements) {
+      execute(statement);
+    }
+  } finally {
+    this->environment = previous;
+  }
+}
+
+
+
 void Interpreter::visitExpressionStmt(const Expression & stmt){
 
     evaluate(*stmt.expression);
