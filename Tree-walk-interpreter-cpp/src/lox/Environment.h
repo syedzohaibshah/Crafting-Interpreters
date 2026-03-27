@@ -7,15 +7,13 @@
 
 class Environment{
     std::unordered_map<std::string,Object> values;
-    Environment enclosing;
+    std::shared_ptr<Environment> enclosing;
 public:
     Environment(){
         enclosing=nullptr;
     }
-    Environment(Environment & enclosing) {
-      this->enclosing = enclosing;
-    }
-
+ Environment(const std::shared_ptr<Environment>& enclosing) : enclosing(enclosing) {}
+ 
     void define(std::string name,Object value);
     void assign(const Token name, const Object &value);
     Object get(const Token &name);

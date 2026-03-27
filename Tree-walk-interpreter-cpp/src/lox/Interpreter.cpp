@@ -78,12 +78,12 @@ VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
 
 
 VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
-  return environment.get(expr.name);
+  return environment->get(expr.name);
 }
 
 VisitorReturn Interpreter:: visitAssignExpr(const Assign & expr) {
          Object value = evaluate(*expr.value);
-         environment.assign(expr.name, value);
+         environment->assign(expr.name, value);
          return value;
        }
 
@@ -169,23 +169,26 @@ void Interpreter:: execute(const Stmt &stmt){
 }
 
 void Interpreter:: visitBlockStmt(const Block & stmt) {
-  executeBlock(stmt.statements, Environment(environment));
+     auto blockEnv = std::make_shared<Environment>(environment);
+  executeBlock(stmt.statements, blockEnv);
   
 }
 
 
-void  Interpreter:: executeBlock(std::vector<std::unique_ptr<Stmt>>  statements,
-                  Environment & environment) {
-  Environment previous = this->environment;
+void  Interpreter:: executeBlock(const std::vector<std::unique_ptr<Stmt>>&  statements,
+                  std::shared_ptr<Environment> environment) {                           //handling scope
+  auto previous = this->environment;
   try {
     this->environment = environment;
 
-    for (Stmt statement : statements) {
-      execute(statement);
+    for (const auto &statement : statements) {
+      execute(*statement);
     }
-  } finally {
+  } catch(...) {
     this->environment = previous;
+    throw;
   }
+  this->environment = previous; 
 }
 
 
@@ -209,6 +212,6 @@ void Interpreter::visitVarStmt(const Var &stmt) {
           value = evaluate(*stmt.initializer);
         }
 
-        environment.define(stmt.name.lexeme, value);
+        environment->define(stmt.name.lexeme, value);
 
       }

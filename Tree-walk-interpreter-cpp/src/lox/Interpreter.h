@@ -11,7 +11,7 @@ class RuntimeError;
 
 class Interpreter : public ExprVisitor,public StmtVisitor {  //...
 private:
-Environment environment;
+ std::shared_ptr<Environment>  environment;
 
     void check_numbered_operand(const Token& op, const Object& left, const Object& right);
     Object evaluate(const Expr& expr);
@@ -34,8 +34,11 @@ public:
     void visitVarStmt(const Var &stmt) override;
     void visitBlockStmt(const Block & stmt) override;
      
-    void executeBlock(std::vector<std::unique_ptr<Stmt>>  statements,
-                      Environment &environment) ;
+    void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
+                      std::shared_ptr<Environment> environment) ;
     
     void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
+
+     Interpreter() : environment(std::make_shared<Environment>()) {}
+    
 };
