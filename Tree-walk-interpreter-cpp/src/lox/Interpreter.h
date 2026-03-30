@@ -22,6 +22,7 @@ private:
 
 public:
     VisitorReturn visitLiteralExpr(const Literal& expr) override;
+    VisitorReturn  visitLogicalExpr(const Logical& expr)override;
     VisitorReturn visitGroupingExpr(const Grouping& expr) override;
     VisitorReturn visitUnaryExpr(const Unary& expr) override;
     VisitorReturn visitBinaryExpr(const Binary& expr) override;
@@ -33,12 +34,14 @@ public:
     void visitPrintStmt(const Print & stmt) override;
     void visitVarStmt(const Var &stmt) override;
     void visitBlockStmt(const Block & stmt) override;
-     
+    void visitIfStmt(const If & stmt) override;
+    void visitWhileStmt(const While & stmt) override;
+
     void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
                       std::shared_ptr<Environment> environment) ;
-    
+
     void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
 
      Interpreter() : environment(std::make_shared<Environment>()) {}
-    
+
 };

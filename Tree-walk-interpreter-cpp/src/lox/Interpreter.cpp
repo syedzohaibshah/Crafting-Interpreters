@@ -14,6 +14,8 @@ Object Interpreter::evaluate(const Expr& expr) {
     return std::get<Object>(expr.accept(*this));
 }
 
+
+
 std::string Interpreter::stringify(const Object& object) {
     if (std::holds_alternative<std::monostate>(object)) return "nil";
 
@@ -54,6 +56,18 @@ bool Interpreter::isEqual(const Object& a, const Object& b) {
 VisitorReturn Interpreter::visitLiteralExpr(const Literal& expr) {
     return expr.value;
 }
+
+VisitorReturn Interpreter:: visitLogicalExpr(const Logical& expr) {
+   Object left = evaluate(*expr.left);
+
+   if (expr.optr.type == OR) {
+     if (isTruthy(left)) return left;
+   } else {
+     if (!isTruthy(left)) return left;
+   }
+
+   return evaluate(*expr.right);
+ }
 
 VisitorReturn Interpreter::visitGroupingExpr(const Grouping& expr) {
     return evaluate(*expr.expression);
@@ -214,4 +228,23 @@ void Interpreter::visitVarStmt(const Var &stmt) {
 
         environment->define(stmt.name.lexeme, value);
 
+      }
+
+      
+void Interpreter::visitIfStmt(const If & stmt) {
+    
+        if (isTruthy(evaluate(*stmt.condition))) {
+          execute(*stmt.thenBranch.get());
+        } else if (stmt.elseBranch != nullptr) {
+          execute(*stmt.elseBranch.get());
+        }
+        
+      }
+      
+    
+void Interpreter:: visitWhileStmt(const While & stmt) {
+        while (isTruthy(evaluate(*stmt.condition))) {
+          execute(*stmt.body);
+        }
+        
       }

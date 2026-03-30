@@ -9,7 +9,7 @@ std::unique_ptr<Expr> Parser::expression(){
  }
 
  std::unique_ptr<Expr> Parser::assignment() {
-     auto expr = conditional();
+     auto expr =    conditional();
 
      if (match({EQUAL})) {
        Token equals = previous();
@@ -32,26 +32,52 @@ std::unique_ptr<Expr> Parser::expression(){
    }
 
 
- std::unique_ptr<Expr> Parser::conditional() {
-     auto expr = equality();
 
-     if (match({TokenType::QUESTION})) {
-         auto thenBranch = expression();
+   std::unique_ptr<Expr> Parser::conditional() {
+       auto expr = orExpr() ;
 
-         consume(TokenType::COLON,
-                 "Expect ':' after then branch.");
+       if (match({TokenType::QUESTION})) {
+           auto thenBranch = expression();
 
-         auto elseBranch = conditional(); // RIGHT associative
+           consume(TokenType::COLON,
+                   "Expect ':' after then branch.");
 
-         expr = std::make_unique<Conditional>(
-             std::move(expr),
-             std::move(thenBranch),
-             std::move(elseBranch)
-         );
-     }
+           auto elseBranch = conditional(); // RIGHT associative
 
-     return expr;
- }
+           expr = std::make_unique<Conditional>(
+               std::move(expr),
+               std::move(thenBranch),
+               std::move(elseBranch)
+           );
+       }
+
+       return expr;
+   }
+
+
+  std::unique_ptr<Expr> Parser:: orExpr() {
+      auto expr = andExpr();
+
+      while (match({OR})) {
+        Token optr = previous();
+        auto right = andExpr();
+        expr = std::make_unique<Logical>(std::move(expr), optr, std::move( right));
+      }
+
+      return expr;
+    }
+
+  std::unique_ptr<Expr> Parser::  andExpr() {
+      auto expr = equality();
+
+      while (match({AND})) {
+        Token optr= previous();
+        auto right =equality();
+        expr = std::make_unique<Logical>(std::move(expr), optr, std::move( right));
+      }
+
+      return expr;
+    }
 
 
 std::unique_ptr<Expr> Parser::equality(){
@@ -300,9 +326,38 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 std::unique_ptr<Stmt>  Parser::statement(){
 
 if(match({PRINT})) return print_statement();
+ if (match({WHILE})) return whileStatement();
+if(match({IF})) return if_statement();
 if (match({LEFT_BRACE})) return std::make_unique<Block>(block());
 
 return expression_statement();
+  }
+  
+std::unique_ptr<Stmt>  Parser:: whileStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'while'.");
+    auto condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after condition.");
+    auto body = statement();
+
+    
+    return std::make_unique<While>(std::move(condition), std::move(body));
+  }
+
+  
+  
+std::unique_ptr<Stmt>  Parser:: if_statement() {  //handle if condition
+
+    consume(LEFT_PAREN, "Expect '(' after 'if'.");
+    auto  condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+    auto thenBranch = statement();
+    std::unique_ptr<Stmt>  elseBranch = nullptr;
+    if (match({ELSE})) {
+      elseBranch = statement();
+    }
+
+    return std::make_unique<If>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
   }
 
 
@@ -321,14 +376,14 @@ std::unique_ptr<Stmt>  Parser::expression_statement() {
      return  std::make_unique<Expression>(std::move(expr));
    }
 
-   
+
 std::vector<std::unique_ptr<Stmt>> Parser::block() {
      std::vector<std::unique_ptr<Stmt>> statements ;
- 
+
      while (!check(RIGHT_BRACE) && !is_at_end()) {
        statements.push_back(declaration());
      }
- 
+
      consume(RIGHT_BRACE, "Expect '}' after block.");
      return statements;
    }

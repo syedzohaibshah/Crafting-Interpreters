@@ -36,7 +36,8 @@ std::unique_ptr<Stmt>  declaration();
 std::unique_ptr<Stmt> statement();
 std::unique_ptr<Stmt> print_statement();
 std::unique_ptr<Stmt> expression_statement();
-
+std::unique_ptr<Stmt> if_statement();
+std::unique_ptr<Stmt>  whileStatement();
 std::vector<std::unique_ptr<Stmt>> block();
 
  //Expr
@@ -46,17 +47,22 @@ std::vector<std::unique_ptr<Stmt>> block();
     std::unique_ptr<Expr>  term();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> expression();
- 
-   
+
+
+    std::unique_ptr<Expr> andExpr();
+    std::unique_ptr<Expr> orExpr();
+
+
+
     // these  are right associative all others are left
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> conditional();
-    
+
     std::unique_ptr<Expr> assignment();
 
-    
+
      ParseError error(const Token & token,const std::string &message);
-     
+
     public:
     Parser(std::vector<Token> &tokens):tokens(tokens){}
 std::vector<std::unique_ptr<Stmt>> parse();

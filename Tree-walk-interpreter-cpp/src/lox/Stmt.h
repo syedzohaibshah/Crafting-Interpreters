@@ -5,6 +5,8 @@ class Expression;
 class Print;
 class Var;
 class Block ;
+class If;
+class While;
 
 class StmtVisitor{
     public:
@@ -12,6 +14,8 @@ class StmtVisitor{
    virtual  void visitExpressionStmt(const Expression &stmt)=0;
    virtual  void visitVarStmt(const Var & stmt)=0;
    virtual  void visitBlockStmt(const Block& stmt)=0;
+   virtual void  visitIfStmt(const If& stmt)=0;
+   virtual void visitWhileStmt(const While& stmt)=0;
 
    virtual ~StmtVisitor()=default;
 };
@@ -93,5 +97,37 @@ void accept(StmtVisitor & visitor) const override{
     return visitor.visitBlockStmt(*this);
   }
 
+
+};
+
+
+class If :public  Stmt {
+    public:
+    std::unique_ptr<Expr> condition;
+     std::unique_ptr<Stmt> thenBranch;
+     std::unique_ptr<Stmt> elseBranch;
+
+  If(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch,  std::unique_ptr<Stmt> elseBranch)
+ :condition(std::move(condition)),thenBranch(std::move(thenBranch)),elseBranch(std::move(elseBranch)){}
+
+void  accept(StmtVisitor & visitor) const override {
+    return visitor.visitIfStmt(*this);
+  }
+
+
+};
+
+class While: public Stmt{
+    
+    public:
+    std::unique_ptr<Expr> condition;
+     std::unique_ptr<Stmt> body;
+  
+    While( std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+    :condition(std::move(condition)),body(std::move(body)){}
+    
+    void  accept(StmtVisitor & visitor) const override {
+        return visitor.visitWhileStmt(*this);
+      }
 
 };
