@@ -38,6 +38,7 @@ std::unique_ptr<Stmt> print_statement();
 std::unique_ptr<Stmt> expression_statement();
 std::unique_ptr<Stmt> if_statement();
 std::unique_ptr<Stmt>  whileStatement();
+std::unique_ptr<Stmt>   forStatement();
 std::vector<std::unique_ptr<Stmt>> block();
 
  //Expr
