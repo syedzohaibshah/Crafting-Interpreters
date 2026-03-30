@@ -9,6 +9,9 @@
 class Token;
 class RuntimeError;
 
+
+class BreakException {};
+
 class Interpreter : public ExprVisitor,public StmtVisitor {  //...
 private:
  std::shared_ptr<Environment>  environment;
@@ -36,7 +39,9 @@ public:
     void visitBlockStmt(const Block & stmt) override;
     void visitIfStmt(const If & stmt) override;
     void visitWhileStmt(const While & stmt) override;
-
+    void visitBreakStmt(const Break& stmt) override;
+  
+    
     void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
                       std::shared_ptr<Environment> environment) ;
 

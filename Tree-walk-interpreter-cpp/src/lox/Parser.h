@@ -19,7 +19,7 @@ class Parser{
 
     std::vector<Token> tokens;
     int current=0;
-
+   int loopDepth = 0;
    //helpers
     bool match(std::initializer_list<TokenType> types);
     bool check(TokenType type);
@@ -39,6 +39,7 @@ std::unique_ptr<Stmt> expression_statement();
 std::unique_ptr<Stmt> if_statement();
 std::unique_ptr<Stmt>  whileStatement();
 std::unique_ptr<Stmt>   forStatement();
+ std::unique_ptr<Stmt> break_statement();
 std::vector<std::unique_ptr<Stmt>> block();
 
  //Expr

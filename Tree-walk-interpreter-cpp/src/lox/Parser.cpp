@@ -328,25 +328,38 @@ std::unique_ptr<Stmt>  Parser::statement(){
 if(match({PRINT})) return print_statement();
  if (match({WHILE})) return whileStatement();
    if (match({FOR})) return forStatement();
+   if(match({BREAK}))return break_statement();
 if(match({IF})) return if_statement();
 if (match({LEFT_BRACE})) return std::make_unique<Block>(block());
 
 return expression_statement();
   }
-  
+  //break statment
+ std::unique_ptr<Stmt> Parser:: break_statement(){
+     if (loopDepth == 0) {
+          error(previous(), "Cannot use 'break' outside of a loop.");
+      }
+      consume(SEMICOLON, "Expect ';' after loop condition.");
+     // std::cout << "Parsing statement: " << peek().lexeme << "\n";
+
+     return std::make_unique<Break>();
+ }
+
 std::unique_ptr<Stmt>  Parser:: whileStatement() {
     consume(LEFT_PAREN, "Expect '(' after 'while'.");
     auto condition = expression();
     consume(RIGHT_PAREN, "Expect ')' after condition.");
-    auto body = statement();
 
-    
+    loopDepth++;
+    auto body = statement();
+    loopDepth--;
+
     return std::make_unique<While>(std::move(condition), std::move(body));
   }
 
-  
+
   /* we do not interpret for stmt , but handle here in parser (DESUGRING)
-   
+
 Block(
    initializer,
     While(
@@ -357,12 +370,12 @@ Block(
       )
     )
   )
-  
+
   */
  std::unique_ptr<Stmt>  Parser:: forStatement() {
-     
+
      consume(LEFT_PAREN, "Expect '(' after 'for'.");
- 
+
      // More here...
      // initializer
      std::unique_ptr<Stmt>  initializer;
@@ -373,63 +386,65 @@ Block(
       } else {
         initializer = expression_statement();
       }
-      
+
       //condition
     std::unique_ptr<Expr> condition = nullptr;
       if (!check(SEMICOLON)) {
         condition = expression();
       }
       consume(SEMICOLON, "Expect ';' after loop condition.");
-      
+
       //increament
-      
+
        std::unique_ptr<Expr> increment = nullptr;
       if (!check(RIGHT_PAREN)) {
         increment = expression();
       }
       consume(RIGHT_PAREN, "Expect ')' after for clauses.");
-      
+
+      //
+      loopDepth++;
         std::unique_ptr<Stmt>  body = statement();
-        
-        
-        
+        loopDepth--;
+
+
         ///
-        /// 
-        
+        ///
+
         if (increment != nullptr) {
             std::vector<std::unique_ptr<Stmt>> stmts;
-        
+
             stmts.push_back(std::move(body));
             stmts.push_back(std::make_unique<Expression>(std::move(increment)));
-        
+
             body = std::make_unique<Block>(std::move(stmts));
         }
-        
-        
+
+
         if (condition == nullptr) {
             condition = std::make_unique<Literal>(true);
         }
-        
+
         body = std::make_unique<While>(
             std::move(condition),
             std::move(body)
         );
-        
-        
+
+
         if (initializer != nullptr) {
             std::vector<std::unique_ptr<Stmt>> stmts;
-        
+
             stmts.push_back(std::move(initializer));
             stmts.push_back(std::move(body));
-        
+
             body = std::make_unique<Block>(std::move(stmts));
         }
-        
-    
+
+
         return body;
    }
 
-  
+
 std::unique_ptr<Stmt>  Parser:: if_statement() {  //handle if condition
 
     consume(LEFT_PAREN, "Expect '(' after 'if'.");

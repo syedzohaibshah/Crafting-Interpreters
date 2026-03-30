@@ -7,6 +7,7 @@ class Var;
 class Block ;
 class If;
 class While;
+class Break;
 
 class StmtVisitor{
     public:
@@ -16,6 +17,8 @@ class StmtVisitor{
    virtual  void visitBlockStmt(const Block& stmt)=0;
    virtual void  visitIfStmt(const If& stmt)=0;
    virtual void visitWhileStmt(const While& stmt)=0;
+   virtual void visitBreakStmt(const Break& stmt)=0;
+
 
    virtual ~StmtVisitor()=default;
 };
@@ -130,4 +133,21 @@ class While: public Stmt{
         return visitor.visitWhileStmt(*this);
       }
 
+};
+
+
+class Break :public Stmt{
+    
+    public:
+    
+    
+    Break(){}
+    
+    
+    
+    void  accept(StmtVisitor & visitor) const override {
+        return visitor.visitBreakStmt(*this);
+      }
+
+    
 };

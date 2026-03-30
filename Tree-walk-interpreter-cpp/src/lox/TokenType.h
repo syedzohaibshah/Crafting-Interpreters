@@ -24,7 +24,7 @@ enum class TokenType{
       PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
 
       //
-
+     BREAK,
 
       END_OF_FILE
 

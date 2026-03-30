@@ -185,7 +185,7 @@ void Interpreter:: execute(const Stmt &stmt){
 void Interpreter:: visitBlockStmt(const Block & stmt) {
      auto blockEnv = std::make_shared<Environment>(environment);
   executeBlock(stmt.statements, blockEnv);
-  
+
 }
 
 
@@ -202,7 +202,7 @@ void  Interpreter:: executeBlock(const std::vector<std::unique_ptr<Stmt>>&  stat
     this->environment = previous;
     throw;
   }
-  this->environment = previous; 
+  this->environment = previous;
 }
 
 
@@ -230,21 +230,34 @@ void Interpreter::visitVarStmt(const Var &stmt) {
 
       }
 
-      
+
 void Interpreter::visitIfStmt(const If & stmt) {
-    
+
         if (isTruthy(evaluate(*stmt.condition))) {
           execute(*stmt.thenBranch.get());
         } else if (stmt.elseBranch != nullptr) {
           execute(*stmt.elseBranch.get());
         }
-        
+
       }
-      
-    
+
+
 void Interpreter:: visitWhileStmt(const While & stmt) {
-        while (isTruthy(evaluate(*stmt.condition))) {
-          execute(*stmt.body);
-        }
-        
+    try {
+          while (isTruthy(evaluate(*stmt.condition.get()))) {
+              try {
+                  execute(*stmt.body.get());
+              } catch (BreakException&) {
+                  break;
+              }
+          }
+      } catch (...) {
+          throw; // propagate other exceptions
+      }
+
+      }
+
+
+      void Interpreter::visitBreakStmt(const Break& stmt) {
+          throw BreakException();
       }
