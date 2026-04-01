@@ -4,11 +4,18 @@
 #include <variant>
 #include <string>
 #include "Environment.h"
-
+#include "LoxCallable.h"
 
 class Token;
 class RuntimeError;
 
+using Object = std::variant<
+    double,
+    std::string,
+    bool,
+    std::nullptr_t,
+    std::shared_ptr<LoxCallable>
+>;
 
 class BreakException {};
 
@@ -32,6 +39,9 @@ public:
     VisitorReturn visitConditionalExpr(const Conditional& expr) override;
     VisitorReturn visitVariableExpr(const Variable &expr) override;
     VisitorReturn visitAssignExpr(const Assign &expr) override;
+    VisitorReturn visitCallExpr(const Call&expr) override;
+    
+    
 
     void visitExpressionStmt(const Expression & stmt)override;
     void visitPrintStmt(const Print & stmt) override;
@@ -40,7 +50,7 @@ public:
     void visitIfStmt(const If & stmt) override;
     void visitWhileStmt(const While & stmt) override;
     void visitBreakStmt(const Break& stmt) override;
-  
+    
     
     void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
                       std::shared_ptr<Environment> environment) ;

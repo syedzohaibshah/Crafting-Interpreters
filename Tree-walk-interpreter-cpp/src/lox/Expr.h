@@ -1,9 +1,11 @@
 #pragma once
 #include "Token.h"
 
+#include <complex>
 #include <memory>
 #include <utility>
 #include<variant>
+
 // Forward declarations
 class Binary;
 class Grouping;
@@ -13,6 +15,7 @@ class Conditional;
 class Variable;
 class Assign;
 class Logical;
+class Call;
 
 using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
 
@@ -27,6 +30,7 @@ public:
     virtual VisitorReturn visitVariableExpr(const Variable &expr)=0;
     virtual VisitorReturn visitAssignExpr(const Assign &expr)=0;
     virtual VisitorReturn visitLogicalExpr(const Logical & expr)=0;
+     virtual VisitorReturn visitCallExpr(const Call & expr)=0;
     virtual ~ExprVisitor() = default;
 };
 
@@ -148,4 +152,20 @@ public:
        }
 
 
+ };
+
+ 
+ class Call :public Expr{
+     public:
+     std::unique_ptr<Expr> callee;
+     Token paren;
+     std::vector<std::unique_ptr<Expr>> arguments;
+     
+     Call(std::unique_ptr<Expr> callee,Token paren,   std::vector<std::unique_ptr<Expr>> arguments)
+     :callee(std::move(callee)),paren(paren),arguments(std::move(arguments)){}
+     
+     
+     VisitorReturn accept(ExprVisitor& visitor) const override {
+         return visitor.visitCallExpr(*this);
+       }
  };

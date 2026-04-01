@@ -90,6 +90,33 @@ VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
     return std::monostate{};
 }
 
+VisitorReturn  Interpreter:: visitCallExpr(const Call& expr) {
+  
+      Object callee = evaluate(*expr.callee);
+  
+       std::vector<Object>arguments ;
+       
+      for (const auto & argument : expr.arguments) { 
+        arguments.push_back(evaluate(*argument));
+      }
+      if (!std::holds_alternative<std::shared_ptr<LoxCallable>>(callee)) {
+          throw RuntimeError(expr.paren,
+              "Can only call functions and classes.");
+      }
+  
+      auto function = std::get<std::shared_ptr<LoxCallable>>(callee);
+      
+      if (arguments.size() != function->arity()) {
+          throw RuntimeError(expr.paren,
+              "Expected " + std::to_string(function->arity()) +
+              " arguments but got " +
+              std::to_string(arguments.size()) + ".");
+      }
+
+     
+      return  function->call(this, arguments);
+    }
+
 
 VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
   return environment->get(expr.name);
@@ -261,3 +288,6 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
       void Interpreter::visitBreakStmt(const Break& stmt) {
           throw BreakException();
       }
+
+      
+   
