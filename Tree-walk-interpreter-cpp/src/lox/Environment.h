@@ -1,9 +1,10 @@
 #pragma once
 #include<iostream>
 #include<unordered_map>
-
-#include "Token.h"
+#include "Object.h"
 #include "RuntimeError.h"
+
+
 
 class Environment{
     std::unordered_map<std::string,Object> values;

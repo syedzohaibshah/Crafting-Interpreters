@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include<map>
 #include<variant>
+#include "Object.h"
 
 class Scanner{
 

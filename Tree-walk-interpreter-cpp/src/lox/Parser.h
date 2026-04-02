@@ -8,7 +8,7 @@
 #include <initializer_list>
 #include "Lox.h"
 #include "Stmt.h"
-
+#include "Object.h"
 
 class ParseError : public std::runtime_error {
 public:
@@ -41,7 +41,8 @@ std::unique_ptr<Stmt>  whileStatement();
 std::unique_ptr<Stmt>   forStatement();
  std::unique_ptr<Stmt> break_statement();
 std::vector<std::unique_ptr<Stmt>> block();
-
+  std::unique_ptr<Stmt>  function(std::string kind);
+  
  //Expr
     std::unique_ptr<Expr> primary();
     std::unique_ptr<Expr>  unary();

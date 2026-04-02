@@ -6,10 +6,9 @@
 #include<utility>
 #include<ostream>
 #include"TokenType.h"
-
+#include "Object.h"
 using enum TokenType;
 
-using Object= std::variant<std::monostate,double,std::string,bool>;  //(equivalent to java object) can hold one value from a fixed set of types, but only one at a time.
 
 class Token{
 public:
@@ -18,7 +17,7 @@ public:
     const Object literal;
     const int line;
 
-    
+
     Token(TokenType type,
         std::string lexeme,
         Object literal,

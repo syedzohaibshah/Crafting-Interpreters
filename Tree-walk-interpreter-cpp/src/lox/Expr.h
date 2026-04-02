@@ -1,11 +1,10 @@
 #pragma once
-#include "Token.h"
-
+#include "Object.h"
 #include <complex>
 #include <memory>
 #include <utility>
 #include<variant>
-
+#include "Token.h"
 // Forward declarations
 class Binary;
 class Grouping;

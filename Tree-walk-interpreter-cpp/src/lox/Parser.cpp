@@ -1,8 +1,12 @@
 
 #include "Parser.h"
 #include <initializer_list>
+#include <memory>
+#include <vector>
 
 #include "Lox.h"
+#include "Stmt.h"
+#include "Token.h"
 std::unique_ptr<Expr> Parser::expression(){
 
      return   assignment();// conditional();
@@ -205,7 +209,7 @@ std::unique_ptr<Expr> Parser:: primary(){
 
     if(match({FALSE})) return std::make_unique<Literal>(false);
     if(match({TRUE})) return std::make_unique<Literal>(true);
-    if(match({NIL})) return std::make_unique<Literal>(nullptr);
+    if(match({NIL})) return std::make_unique<Literal>(std::monostate{});
 
 
     if(match({NUMBER,STRING})){
@@ -331,6 +335,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
   std::unique_ptr<Stmt> Parser:: declaration(){
 
       try{
+        if (match({FUN})) return function("function");
         if (match({VAR})) return varDeclaration();
         return statement();
 
@@ -360,6 +365,38 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 
   }
 
+  //parse function
+  std::unique_ptr<Stmt>  Parser:: function(std::string kind) {
+    Token name = consume(IDENTIFIER, "Expect " + kind + " name.");  //consume function name
+
+    consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+
+        //parse parameters
+        std::vector<Token>parameters;
+
+        if (!check(RIGHT_PAREN)) {
+          do {
+            if (parameters.size() >= 255) {
+              error(peek(), "Can't have more than 255 parameters.");
+            }
+
+            parameters.push_back( consume(IDENTIFIER, "Expect parameter name."));
+          } while (match({COMMA}));
+        }
+
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
+
+
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        //parse body
+        std::vector<std::unique_ptr<Stmt>> body = block();
+
+
+        return std::make_unique<Function>(name,parameters,body);
+
+
+  }
 std::unique_ptr<Stmt>  Parser::statement(){
 
 if(match({PRINT})) return print_statement();

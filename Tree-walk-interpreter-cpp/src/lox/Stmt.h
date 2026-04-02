@@ -1,6 +1,7 @@
 #pragma once
 
-
+#include "Token.h"
+#include <vector>
 class Expression;
 class Print;
 class Var;
@@ -8,6 +9,7 @@ class Block ;
 class If;
 class While;
 class Break;
+class Function;
 
 class StmtVisitor{
     public:
@@ -18,6 +20,7 @@ class StmtVisitor{
    virtual void  visitIfStmt(const If& stmt)=0;
    virtual void visitWhileStmt(const While& stmt)=0;
    virtual void visitBreakStmt(const Break& stmt)=0;
+   virtual void visitFunctionStmt(const Function & stmt)=0;
 
 
    virtual ~StmtVisitor()=default;
@@ -121,14 +124,14 @@ void  accept(StmtVisitor & visitor) const override {
 };
 
 class While: public Stmt{
-    
+
     public:
     std::unique_ptr<Expr> condition;
      std::unique_ptr<Stmt> body;
-  
+
     While( std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
     :condition(std::move(condition)),body(std::move(body)){}
-    
+
     void  accept(StmtVisitor & visitor) const override {
         return visitor.visitWhileStmt(*this);
       }
@@ -137,17 +140,39 @@ class While: public Stmt{
 
 
 class Break :public Stmt{
-    
+
     public:
-    
-    
+
+
     Break(){}
-    
-    
-    
+
+
+
     void  accept(StmtVisitor & visitor) const override {
         return visitor.visitBreakStmt(*this);
       }
 
-    
+
+};
+
+
+class Function :public Stmt{
+    public :
+
+    const Token name;
+    std::vector<Token> params;
+    std::vector< std::unique_ptr<Stmt>>body;
+
+    Function ( const Token& name,std::vector<Token> params,std::vector< std::unique_ptr<Stmt>>body):
+    name(name),params(params),body(body){}
+
+
+
+    void  accept(StmtVisitor & visitor) const override {
+        return visitor.visitFunctionStmt(*this);
+      }
+
+
+
+
 };

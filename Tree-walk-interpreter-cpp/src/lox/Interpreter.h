@@ -1,27 +1,26 @@
 #pragma once
 #include "Expr.h"
 #include"Stmt.h"
+#include <future>
+#include <memory>
 #include <variant>
 #include <string>
 #include "Environment.h"
 #include "LoxCallable.h"
+#include "ClockFunction.h"
+#include "Object.h"
 
 class Token;
 class RuntimeError;
-
-using Object = std::variant<
-    double,
-    std::string,
-    bool,
-    std::nullptr_t,
-    std::shared_ptr<LoxCallable>
->;
 
 class BreakException {};
 
 class Interpreter : public ExprVisitor,public StmtVisitor {  //...
 private:
+std::shared_ptr<Environment> globals;
+
  std::shared_ptr<Environment>  environment;
+
 
     void check_numbered_operand(const Token& op, const Object& left, const Object& right);
     Object evaluate(const Expr& expr);
@@ -57,6 +56,14 @@ public:
 
     void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
 
-     Interpreter() : environment(std::make_shared<Environment>()) {}
+     //Interpreter() : environment(std::make_shared<Environment>()) {}
+Interpreter() {
+    globals = std::make_shared<Environment>();
+           environment = globals;
+
+           globals->define("clock",
+                  std::make_shared<ClockFunction>());
+}
+
 
 };
