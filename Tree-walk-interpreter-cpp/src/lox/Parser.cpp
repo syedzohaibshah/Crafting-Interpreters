@@ -335,6 +335,8 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
   std::unique_ptr<Stmt> Parser:: declaration(){
 
       try{
+
+
         if (match({FUN})) return function("function");
         if (match({VAR})) return varDeclaration();
         return statement();
@@ -348,6 +350,8 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
       }
 
   }
+
+
 
  std::unique_ptr<Stmt>   Parser::varDeclaration(){
      Token name=consume(IDENTIFIER,"expect varible name");
@@ -392,14 +396,16 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
         //parse body
         std::vector<std::unique_ptr<Stmt>> body = block();
 
+//block will consume rigth brace;
 
-        return std::make_unique<Function>(name,parameters,body);
+        return std::make_unique<Function>(std::move(name),std::move(parameters),std::move(body));
 
 
   }
 std::unique_ptr<Stmt>  Parser::statement(){
 
 if(match({PRINT})) return print_statement();
+ if (match({RETURN})) return returnStatement();
  if (match({WHILE})) return whileStatement();
    if (match({FOR})) return forStatement();
    if(match({BREAK}))return break_statement();
@@ -407,6 +413,20 @@ if(match({IF})) return if_statement();
 if (match({LEFT_BRACE})) return std::make_unique<Block>(block());
 
 return expression_statement();
+  }
+
+  //return statement
+  std::unique_ptr<Stmt>  Parser:: returnStatement() {
+    Token keyword = previous();
+    std::unique_ptr<Expr> value = nullptr;
+
+    if (!check(SEMICOLON)) {
+      value = expression();
+    }
+
+    consume(SEMICOLON, "Expect ';' after return value.");
+
+    return std::make_unique<Return>(std::move(keyword), std::move(value));
   }
   //break statment
  std::unique_ptr<Stmt> Parser:: break_statement(){

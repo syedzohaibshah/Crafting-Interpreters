@@ -4,6 +4,8 @@
 #include "Lox.h"
 #include <iostream>
 #include <variant>
+#include "LoxFunction.h"
+#include "ReturnVal.h"
 
 void Interpreter::check_numbered_operand(const Token& op, const Object& left, const Object& right) {
     if (std::holds_alternative<double>(right) && std::holds_alternative<double>(left)) return;
@@ -91,21 +93,21 @@ VisitorReturn Interpreter::visitUnaryExpr(const Unary& expr) {
 }
 
 VisitorReturn  Interpreter:: visitCallExpr(const Call& expr) {
-  
+
       Object callee = evaluate(*expr.callee);
-  
+
        std::vector<Object>arguments ;
-       
-      for (const auto & argument : expr.arguments) { 
+
+      for (const auto & argument : expr.arguments) {
         arguments.push_back(evaluate(*argument));
       }
       if (!std::holds_alternative<std::shared_ptr<LoxCallable>>(callee)) {
           throw RuntimeError(expr.paren,
               "Can only call functions and classes.");
       }
-  
+
       auto function = std::get<std::shared_ptr<LoxCallable>>(callee);
-      
+
       if (arguments.size() != function->arity()) {
           throw RuntimeError(expr.paren,
               "Expected " + std::to_string(function->arity()) +
@@ -113,9 +115,11 @@ VisitorReturn  Interpreter:: visitCallExpr(const Call& expr) {
               std::to_string(arguments.size()) + ".");
       }
 
-     
+
       return  function->call(this, arguments);
     }
+
+
 
 
 VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
@@ -191,19 +195,17 @@ VisitorReturn Interpreter::visitConditionalExpr(const Conditional& expr) {
 }
 
 
-void Interpreter::interpret(std::vector<std::unique_ptr<Stmt>> &statements) {
+void Interpreter::interpret(std::vector<Stmt*> &statements) {
     try {
-        for(const auto & stmt:statements){
+        for (const auto* stmt : statements) {
             execute(*stmt);
         }
     } catch (const RuntimeError& error) {
         Lox::runtimeError(error);
-    }
-    catch (const std::exception& ex) {
+    } catch (const std::exception& ex) {
         std::cerr << "Interpreter internal error: " << ex.what() << '\n';
     }
 }
-
 
 void Interpreter:: execute(const Stmt &stmt){
     stmt.accept(*this);
@@ -237,6 +239,15 @@ void  Interpreter:: executeBlock(const std::vector<std::unique_ptr<Stmt>>&  stat
 void Interpreter::visitExpressionStmt(const Expression & stmt){
 
     evaluate(*stmt.expression);
+
+}
+
+
+void Interpreter:: visitFunctionStmt(const Function& stmt) {
+
+  auto function = std::make_shared<LoxFunction>(&stmt,environment);
+
+  environment->define(stmt.name.lexeme, function);
 
 }
 
@@ -289,5 +300,17 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
           throw BreakException();
       }
 
+
+
+       void Interpreter::visitReturnStmt(const Return & stmt) {
+        Object value = std::monostate{};
+        if (stmt.value != nullptr) value = evaluate(*stmt.value);
+
+       throw ReturnVal(value,"");
+
+      }
+
+       void Interpreter:: resolve(const Expr & expr, int depth) {
+        locals.put(expr, depth);
+      }
       
-   

@@ -2,6 +2,7 @@
 
 #include "Token.h"
 #include <vector>
+#include "Expr.h"
 class Expression;
 class Print;
 class Var;
@@ -10,6 +11,7 @@ class If;
 class While;
 class Break;
 class Function;
+class Return;
 
 class StmtVisitor{
     public:
@@ -21,6 +23,7 @@ class StmtVisitor{
    virtual void visitWhileStmt(const While& stmt)=0;
    virtual void visitBreakStmt(const Break& stmt)=0;
    virtual void visitFunctionStmt(const Function & stmt)=0;
+   virtual void visitReturnStmt(const Return & stmt)=0;
 
 
    virtual ~StmtVisitor()=default;
@@ -159,12 +162,16 @@ class Break :public Stmt{
 class Function :public Stmt{
     public :
 
-    const Token name;
+    Token name;
     std::vector<Token> params;
     std::vector< std::unique_ptr<Stmt>>body;
 
-    Function ( const Token& name,std::vector<Token> params,std::vector< std::unique_ptr<Stmt>>body):
-    name(name),params(params),body(body){}
+    Function(Token name,
+             std::vector<Token> params,
+             std::vector<std::unique_ptr<Stmt>> body)
+      : name(std::move(name)),
+        params(std::move(params)),
+        body(std::move(body)) {}
 
 
 
@@ -173,6 +180,20 @@ class Function :public Stmt{
       }
 
 
+
+
+};
+
+
+class Return :public Stmt{
+public:
+     Token keyword;
+    std::unique_ptr<Expr> value;
+    Return (Token keyword,std::unique_ptr<Expr> value):keyword(keyword),value(std::move(value)){}
+
+    void  accept(StmtVisitor & visitor) const override {
+        return visitor.visitReturnStmt(*this);
+      }
 
 
 };

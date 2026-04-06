@@ -53,24 +53,33 @@ void Lox::run_prompt(){
 }
 
 
-void Lox::run(const std::string& source){
-
-   Scanner scanner(source);
-   std::vector<Token>tokens=scanner.scan_tokens();
-
-Parser parser(tokens);
-std::vector<std::unique_ptr<Stmt>> statements= parser.parse();
-
-if(had_error) return;
 
 
 // AstPrinter printer;
 // std::cout<<printer.print(*expr)<<std::endl;
 //
+void Lox::run(const std::string& source){
 
-static Interpreter interpreter;
-interpreter.interpret(statements);
+   Scanner scanner(source);
+   std::vector<Token> tokens = scanner.scan_tokens();
 
+   Parser parser(tokens);
+   std::vector<std::unique_ptr<Stmt>> parsed = parser.parse();
+
+   if (had_error) return;
+
+   static Interpreter interpreter;
+   static std::vector<std::unique_ptr<Stmt>> replOwnedStatements;
+
+   std::vector<Stmt*> batch;
+   batch.reserve(parsed.size());
+
+   for (auto& stmt : parsed) {
+       replOwnedStatements.push_back(std::move(stmt));
+       batch.push_back(replOwnedStatements.back().get());
+   }
+
+   interpreter.interpret(batch);
 }
 
 void Lox::error(int line,const std::string &message){

@@ -40,9 +40,10 @@ std::unique_ptr<Stmt> if_statement();
 std::unique_ptr<Stmt>  whileStatement();
 std::unique_ptr<Stmt>   forStatement();
  std::unique_ptr<Stmt> break_statement();
+ std::unique_ptr<Stmt> returnStatement();
 std::vector<std::unique_ptr<Stmt>> block();
   std::unique_ptr<Stmt>  function(std::string kind);
-  
+
  //Expr
     std::unique_ptr<Expr> primary();
     std::unique_ptr<Expr>  unary();
@@ -52,8 +53,8 @@ std::vector<std::unique_ptr<Stmt>> block();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> expression();
 
-    
-    
+
+
    std::unique_ptr<Expr> finishCall(  std::unique_ptr<Expr>  callee);
 
     std::unique_ptr<Expr> andExpr();

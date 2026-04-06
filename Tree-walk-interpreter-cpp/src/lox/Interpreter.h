@@ -1,8 +1,9 @@
 #pragma once
 #include "Expr.h"
 #include"Stmt.h"
-#include <future>
+#include <future>          //observations:: stsmt return voi and expr return Object
 #include <memory>
+#include <unordered_map>
 #include <variant>
 #include <string>
 #include "Environment.h"
@@ -17,9 +18,6 @@ class BreakException {};
 
 class Interpreter : public ExprVisitor,public StmtVisitor {  //...
 private:
-std::shared_ptr<Environment> globals;
-
- std::shared_ptr<Environment>  environment;
 
 
     void check_numbered_operand(const Token& op, const Object& left, const Object& right);
@@ -28,8 +26,15 @@ std::shared_ptr<Environment> globals;
     bool isTruthy(const Object& object);
     bool isEqual(const Object& a, const Object& b);
     void execute(const Stmt &stmt);
+    void resolve(const Expr & expr, int depth);
 
 public:
+
+std::shared_ptr<Environment> globals;
+
+ std::shared_ptr<Environment>  environment;
+ std::unordered_map<Expr, integer> locals;
+
     VisitorReturn visitLiteralExpr(const Literal& expr) override;
     VisitorReturn  visitLogicalExpr(const Logical& expr)override;
     VisitorReturn visitGroupingExpr(const Grouping& expr) override;
@@ -40,7 +45,7 @@ public:
     VisitorReturn visitAssignExpr(const Assign &expr) override;
     VisitorReturn visitCallExpr(const Call&expr) override;
     
-    
+
 
     void visitExpressionStmt(const Expression & stmt)override;
     void visitPrintStmt(const Print & stmt) override;
@@ -49,12 +54,12 @@ public:
     void visitIfStmt(const If & stmt) override;
     void visitWhileStmt(const While & stmt) override;
     void visitBreakStmt(const Break& stmt) override;
-    
-    
+    void visitFunctionStmt(const Function& stmt)override;
+     void visitReturnStmt(const Return & stmt) override;
     void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
                       std::shared_ptr<Environment> environment) ;
 
-    void interpret(std::vector<std::unique_ptr<Stmt>> &statements);
+    void interpret(std::vector<Stmt*> &statements);
 
      //Interpreter() : environment(std::make_shared<Environment>()) {}
 Interpreter() {
