@@ -3,15 +3,19 @@
 #include "Expr.h"
 #include "Stmt.h"
 class Interpreter;
-
-
-
-
+ 
 #include <memory>
+
+ enum class  FunctionType {
+  NONE,
+  FUNCTION
+};
+
 class Resolver : public ExprVisitor,public StmtVisitor{
 
 
     std::vector<std::unordered_map<std::string, bool>> scopes;
+    FunctionType currentFunction = FunctionType::NONE;
     Interpreter* interpreter;
    
 
@@ -28,7 +32,7 @@ class Resolver : public ExprVisitor,public StmtVisitor{
      void  define(Token name);
      
    void resolveLocal(std::unique_ptr<Expr>expr, const Token& name);
-   void   resolveFunction(const Function & function);
+   void   resolveFunction(const Function & function,FunctionType::FUNCTION);
  public:
 
 

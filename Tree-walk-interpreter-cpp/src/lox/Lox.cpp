@@ -4,7 +4,7 @@
 #include "Token.h"
 #include "Stmt.h"
 #include "TokenType.h"
-
+#include "Resolver.h"
 #include<iostream>
 #include <fstream>
 #include <sstream>
@@ -68,7 +68,16 @@ void Lox::run(const std::string& source){
 
    if (had_error) return;
 
+   
+   
+   
+       
+   
+
    static Interpreter interpreter;
+   
+   
+   //storing statements for multiple prompt
    static std::vector<std::unique_ptr<Stmt>> replOwnedStatements;
 
    std::vector<Stmt*> batch;
@@ -78,7 +87,15 @@ void Lox::run(const std::string& source){
        replOwnedStatements.push_back(std::move(stmt));
        batch.push_back(replOwnedStatements.back().get());
    }
+   
+    //resolver
+   Resolver resolver(interpreter);
+   resolver.resolve(batch);
+   
+   //skip interpreting  if error in reolver
+   if (had_error) return;
 
+   
    interpreter.interpret(batch);
 }
 

@@ -27,13 +27,13 @@ private:
     bool isEqual(const Object& a, const Object& b);
     void execute(const Stmt &stmt);
     void resolve(const Expr & expr, int depth);
-
+VisitorReturn  lookUpVariable(Token name, const Expr &expr);
 public:
 
 std::shared_ptr<Environment> globals;
 
  std::shared_ptr<Environment>  environment;
- std::unordered_map<Expr, integer> locals;
+ std::unordered_map<Expr, int> locals;
 
     VisitorReturn visitLiteralExpr(const Literal& expr) override;
     VisitorReturn  visitLogicalExpr(const Logical& expr)override;
@@ -44,7 +44,7 @@ std::shared_ptr<Environment> globals;
     VisitorReturn visitVariableExpr(const Variable &expr) override;
     VisitorReturn visitAssignExpr(const Assign &expr) override;
     VisitorReturn visitCallExpr(const Call&expr) override;
-    
+
 
 
     void visitExpressionStmt(const Expression & stmt)override;

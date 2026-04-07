@@ -55,8 +55,14 @@ void Resolver :: visitVarStmt(const Var & stmt) {
 
 void Resolver :: declare(Token name) {
     if (scopes.empty()) return;
-
+    
+  
     std::unordered_map<std::string, bool> scope = scopes.back();
+    if (scope.find(name.lexeme)!=scope.end()) {
+      Lox::error(name,
+          "Already a variable with this name in this scope.");
+    }
+
     scope[name.lexeme]= false;
 
   }
@@ -111,7 +117,9 @@ void Resolver ::  define(Token name) {
 
     }
     
- void Resolver::resolveFunction(const Function & function) {
+ void Resolver::resolveFunction(const Function & function,FunctionType type) {
+     FunctionType enclosingFunction = currentFunction;
+         currentFunction = type;
        beginScope();
        for (Token param : function.params) {
          declare(param);
@@ -119,6 +127,7 @@ void Resolver ::  define(Token name) {
        }
        resolve(function.body);
        endScope();
+        currentFunction = enclosingFunction;
      }
      
 
@@ -141,7 +150,9 @@ void Resolver:: visitPrintStmt(const Print &stmt) {
      }     
      
 void Resolver:: visitReturnStmt(const Return &stmt) {
-    
+    if (currentFunction == FunctionType::NONE) {
+      Lox::error(stmt.keyword, "Can't return from top-level code.");
+    }
        if (stmt.value != nullptr) {
          resolve(stmt.value);
        }

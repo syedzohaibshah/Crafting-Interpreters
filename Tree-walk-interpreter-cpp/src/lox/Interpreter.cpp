@@ -123,14 +123,40 @@ VisitorReturn  Interpreter:: visitCallExpr(const Call& expr) {
 
 
 VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
-  return environment->get(expr.name);
+ return lookUpVariable(expr.name, expr);
 }
+///variable resolution
+VisitorReturn Interpreter::  lookUpVariable(Token name, const Expr &expr) {
+  int distance = locals[expr];//wht if it is not?
+  if (distance != nullptr) {
+    return environment->getAt(distance, name.lexeme);
+  } else {
+    return globals->get(name);
+  }
+}
+
+
 
 VisitorReturn Interpreter:: visitAssignExpr(const Assign & expr) {
          Object value = evaluate(*expr.value);
+         
+         
+         int distance = locals[expr];
+         
+         if (distance != nullptr) {
+             
+           environment->assignAt(distance, expr.name, value);
+           
+         } else {
+           globals->assign(expr.name, value);
+         }
+         
+         
          environment->assign(expr.name, value);
+         
          return value;
        }
+       
 
 VisitorReturn Interpreter::visitBinaryExpr(const Binary& expr) {
     Object left = evaluate(*expr.left);
@@ -311,6 +337,7 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
       }
 
        void Interpreter:: resolve(const Expr & expr, int depth) {
-        locals.put(expr, depth);
+        locals[exp]=depth;
       }
+      
       
