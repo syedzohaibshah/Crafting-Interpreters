@@ -12,6 +12,7 @@ class While;
 class Break;
 class Function;
 class Return;
+class Class;
 
 class StmtVisitor{
     public:
@@ -24,6 +25,7 @@ class StmtVisitor{
    virtual void visitBreakStmt(const Break& stmt)=0;
    virtual void visitFunctionStmt(const Function & stmt)=0;
    virtual void visitReturnStmt(const Return & stmt)=0;
+   virtual void visitClassStmt(const Class & stmt)=0;
 
 
    virtual ~StmtVisitor()=default;
@@ -193,6 +195,20 @@ public:
 
     void  accept(StmtVisitor & visitor) const override {
         return visitor.visitReturnStmt(*this);
+      }
+
+
+};
+
+
+class Class :public Stmt{
+public:
+     Token name;
+     std::vector< std::unique_ptr<Function>>methods;
+    Class(Token name,std::vector< std::unique_ptr<Function>>methods):name(name),methods(std::move(methods)){}
+
+    void  accept(StmtVisitor & visitor) const override {
+        return visitor.visitClassStmt(*this);
       }
 
 

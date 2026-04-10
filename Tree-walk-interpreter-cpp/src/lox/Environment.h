@@ -16,7 +16,7 @@ public:
  Environment(const std::shared_ptr<Environment>& enclosing) : enclosing(enclosing) {}
  
     void define(std::string name,Object value);
-    void assign(const Token name, const Object &value);
+    void assign(const Token name, const Object & value);
     Object get(const Token &name);
     Object getAt(int distance, std::string name);
     Environment ancestor(int distance) ;

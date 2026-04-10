@@ -370,7 +370,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
   }
 
   //parse function
-  std::unique_ptr<Stmt>  Parser:: function(std::string kind) {
+  std::unique_ptr<Function>  Parser:: function(std::string kind) {
     Token name = consume(IDENTIFIER, "Expect " + kind + " name.");  //consume function name
 
     consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
@@ -405,6 +405,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 std::unique_ptr<Stmt>  Parser::statement(){
 
 if(match({PRINT})) return print_statement();
+  if (match({CLASS})) return classDeclaration();
  if (match({RETURN})) return returnStatement();
  if (match({WHILE})) return whileStatement();
    if (match({FOR})) return forStatement();
@@ -415,6 +416,25 @@ if (match({LEFT_BRACE})) return std::make_unique<Block>(block());
 return expression_statement();
   }
 
+
+
+  std::unique_ptr<Stmt>  Parser:: classDeclaration(){
+
+      Token name = consume(IDENTIFIER, "Expect class name.");
+         consume(LEFT_BRACE, "Expect '{' before class body.");
+
+         std::vector<std::unique_ptr<Function>> methods;
+
+         while (!check(RIGHT_BRACE) && !is_at_end()) {
+           methods.push_back(function("method")); //check
+         }
+
+         consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+         return std::make_unique<Class>(name,std::move(methods));
+
+
+  }
   //return statement
   std::unique_ptr<Stmt>  Parser:: returnStatement() {
     Token keyword = previous();

@@ -2,14 +2,10 @@
 #include "Interpreter.h"
 #include "Expr.h"
 #include "Stmt.h"
-class Interpreter;
- 
+#include "FunctionType.h"
 #include <memory>
 
- enum class  FunctionType {
-  NONE,
-  FUNCTION
-};
+
 
 class Resolver : public ExprVisitor,public StmtVisitor{
 
@@ -17,25 +13,25 @@ class Resolver : public ExprVisitor,public StmtVisitor{
     std::vector<std::unordered_map<std::string, bool>> scopes;
     FunctionType currentFunction = FunctionType::NONE;
     Interpreter* interpreter;
-   
 
-      Resolver(Interpreter interpreter):interpreter(std::move(interpreter)){}
 
     //helpers:
     //
-    void resolve(std::vector<Stmt> statements);
-    void resolve(const Stmt &  stmt);
-    void resolve(const Expr &expr);
+
     void  beginScope();
      void  endScope() ;
      void declare(Token name);
      void  define(Token name);
-     
-   void resolveLocal(std::unique_ptr<Expr>expr, const Token& name);
-   void   resolveFunction(const Function & function,FunctionType::FUNCTION);
+
+   void resolveLocal(const Expr & expr, const Token& name);
+   void   resolveFunction(const Function & function,FunctionType func);
  public:
+ void resolve(const std::vector<std::unique_ptr<Stmt>>& statements);
+ void resolve(const Stmt &stmt);
+ void resolve(const Expr &expr);
 
 
+ Resolver(Interpreter* interpreter):interpreter(interpreter){}
 
 
 
@@ -48,15 +44,19 @@ class Resolver : public ExprVisitor,public StmtVisitor{
   void visitPrintStmt(const Print &stmt)override;
   void visitReturnStmt(const Return &stmt)override;
   void  visitWhileStmt(const While & stmt) override;
-
-void visitVariableExpr(const Variable &expr) override;
-void visitAssignExpr(const Assign & expr)override;
-void visitBinaryExpr(const Binary& expr) override;
-void  visitCallExpr(const Call &expr) override;
-void  visitGroupingExpr(const Grouping &expr)override;
-void  visitLiteralExpr(const Literal& expr)override;
-void visitLogicalExpr(const Logical &expr)override;
-void  visitUnaryExpr(const Unary &expr)override;
+ void visitBreakStmt(const Break& stmt)override;
+ void visitClassStmt(const Class &stmt) override;
+ 
+ 
+VisitorReturn visitVariableExpr(const Variable &expr) override;
+VisitorReturn visitAssignExpr(const Assign & expr)override;
+VisitorReturn visitBinaryExpr(const Binary& expr) override;
+VisitorReturn  visitCallExpr(const Call &expr) override;
+VisitorReturn  visitGroupingExpr(const Grouping &expr)override;
+VisitorReturn  visitLiteralExpr(const Literal& expr)override;
+VisitorReturn visitLogicalExpr(const Logical &expr)override;
+VisitorReturn  visitUnaryExpr(const Unary &expr)override;
+VisitorReturn visitConditionalExpr(const Conditional &expr )override;
 
 
 

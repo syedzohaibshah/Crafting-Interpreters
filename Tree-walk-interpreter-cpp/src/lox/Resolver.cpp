@@ -2,7 +2,9 @@
 #include "Stmt.h"
 #include <memory>
 #include <unordered_map>
+#include <variant>
 #include "Lox.h"
+#include "Interpreter.h"
 
 void Resolver:: visitBlockStmt(const Block &stmt) {
   beginScope();
@@ -11,10 +13,10 @@ void Resolver:: visitBlockStmt(const Block &stmt) {
 
 }
 
-void  Resolver :: resolve(std::vector<Stmt> statements) {
+void  Resolver :: resolve(const std::vector<std::unique_ptr<Stmt>>& statements) {
 
-  for (auto statement : statements) {
-    resolve(statement);
+  for (auto  & statement : statements) {
+    resolve(*statement);
   }
 }
 
@@ -46,7 +48,7 @@ void Resolver :: visitVarStmt(const Var & stmt) {
 
     declare(stmt.name);
     if (stmt.initializer != nullptr) {
-      resolve(stmt.initializer);
+      resolve(*stmt.initializer);
     }
     define(stmt.name);
 
@@ -55,9 +57,9 @@ void Resolver :: visitVarStmt(const Var & stmt) {
 
 void Resolver :: declare(Token name) {
     if (scopes.empty()) return;
-    
-  
-    std::unordered_map<std::string, bool> scope = scopes.back();
+
+
+    auto& scope = scopes.back();
     if (scope.find(name.lexeme)!=scope.end()) {
       Lox::error(name,
           "Already a variable with this name in this scope.");
@@ -73,7 +75,7 @@ void Resolver ::  define(Token name) {
   }
 
 
-  void Resolver::visitVariableExpr(const Variable & expr) {
+  VisitorReturn Resolver::visitVariableExpr(const Variable & expr) {
       // Check if there is a local scope
       if (!scopes.empty()) {
           auto& innermost = scopes.back();
@@ -87,11 +89,11 @@ void Resolver ::  define(Token name) {
       // Resolve variable to a specific scope
       resolveLocal(expr, expr.name);
 
-
+ return std::monostate{};
   }
 
 
-  void Resolver::resolveLocal(std::unique_ptr<Expr>expr, const Token& name) {
+  void Resolver::resolveLocal(const Expr& expr, const Token& name) {
 
       for (int i = scopes.size() - 1; i >= 0; --i) {
           if (scopes[i].find(name.lexeme) != scopes[i].end()) {
@@ -103,20 +105,20 @@ void Resolver ::  define(Token name) {
   }
 
 
-  void Resolver:: visitAssignExpr(const Assign & expr) {
-    resolve(expr.value);
+  VisitorReturn Resolver:: visitAssignExpr(const Assign & expr) {
+    resolve(*expr.value);
     resolveLocal(expr, expr.name);
-
+ return std::monostate{};
   }
 
   void Resolver:: visitFunctionStmt(const Function & stmt) {
       declare(stmt.name);
       define(stmt.name);
 
-      resolveFunction(stmt);
+      resolveFunction(stmt,FunctionType::FUNCTION);
 
     }
-    
+
  void Resolver::resolveFunction(const Function & function,FunctionType type) {
      FunctionType enclosingFunction = currentFunction;
          currentFunction = type;
@@ -129,83 +131,106 @@ void Resolver ::  define(Token name) {
        endScope();
         currentFunction = enclosingFunction;
      }
-     
+
 
 void Resolver:: visitExpressionStmt(const Expression &stmt) {
-       resolve(stmt.expression);
-   
+       resolve(*stmt.expression);
+
      }
-     
+
 void Resolver:: visitIfStmt(const If &stmt) {
-       resolve(stmt.condition);
-       resolve(stmt.thenBranch);
-       if (stmt.elseBranch != nullptr) resolve(stmt.elseBranch);
-      
-     }   
-     
+       resolve(*stmt.condition);
+       resolve(*stmt.thenBranch);
+       if (stmt.elseBranch != nullptr) resolve(*stmt.elseBranch);
+
+     }
+
 
 void Resolver:: visitPrintStmt(const Print &stmt) {
-       resolve(stmt.expression);
-   
-     }     
-     
+       resolve(*stmt.expression);
+
+     }
+
 void Resolver:: visitReturnStmt(const Return &stmt) {
     if (currentFunction == FunctionType::NONE) {
       Lox::error(stmt.keyword, "Can't return from top-level code.");
     }
        if (stmt.value != nullptr) {
-         resolve(stmt.value);
+         resolve(*stmt.value);
        }
-   
-    
+
+
      }
 
-     
+
 void Resolver:: visitWhileStmt(const While & stmt) {
-       resolve(stmt.condition);
-       resolve(stmt.body);
+       resolve(*stmt.condition);
+       resolve(*stmt.body);
+
+     }
+
+    void Resolver:: visitBreakStmt(const Break& stmt){
+
+        //nothing
+    }
+
+    
+    
+ void Resolver:: visitClassStmt(const Class &stmt) {
+        declare(stmt.name);
+        define(stmt.name);
+        
+      }
       
+     VisitorReturn Resolver:: visitBinaryExpr(const Binary& expr) {
+       resolve(*expr.left);
+       resolve(*expr.right);
+      return std::monostate{};
      }
 
-     
-     
-     void Resolver:: visitBinaryExpr(const Binary& expr) {
-       resolve(expr.left);
-       resolve(expr.right);
-       return null;
-     }
-     
-     
-     void Resolver:: visitCallExpr(const Call &expr) {
-       resolve(expr.callee);
-   
-       for (Expr argument : expr.arguments) {
-         resolve(argument);
+
+     VisitorReturn Resolver:: visitCallExpr(const Call &expr) {
+       resolve(*expr.callee);
+
+       for (auto & argument : expr.arguments) {
+         resolve(*argument);
        }
-   
-       return null;
+
+        return std::monostate{};
+     }
+
+
+     VisitorReturn Resolver:: visitGroupingExpr(const Grouping &expr) {
+       resolve(*expr.expression);
+       return std::monostate{};
+     }
+
+
+     VisitorReturn Resolver:: visitLiteralExpr(const Literal& expr) {
+       return std::monostate{};
+     }
+
+
+     VisitorReturn Resolver:: visitLogicalExpr(const Logical &expr) {
+       resolve(*expr.left);
+       resolve(*expr.right);
+      return std::monostate{};
+     }
+
+
+     VisitorReturn Resolver:: visitUnaryExpr(const Unary &expr) {
+       resolve(*expr.right);
+        return std::monostate{};
+     }
+
+     VisitorReturn Resolver:: visitConditionalExpr(const Conditional &expr ){
+
+         resolve(*expr.condition);
+         resolve(*expr.thenBranch);
+         resolve(*expr.elseBranch);
+         
+         return std::monostate{};
+
      }
 
      
-     void Resolver:: visitGroupingExpr(const Grouping &expr) {
-       resolve(expr.expression);
-       return null;
-     }
-     
-     
-     void Resolver:: visitLiteralExpr(const Literal& expr) {
-       return null;
-     }
-     
-     
-     void Resolver:: visitLogicalExpr(const Logical &expr) {
-       resolve(expr.left);
-       resolve(expr.right);
-       return null;
-     }
-     
-     
-     void Resolver:: visitUnaryExpr(const Unary &expr) {
-       resolve(expr.right);
-       return null;
-     }

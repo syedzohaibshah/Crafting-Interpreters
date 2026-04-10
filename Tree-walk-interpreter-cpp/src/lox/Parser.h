@@ -42,7 +42,8 @@ std::unique_ptr<Stmt>   forStatement();
  std::unique_ptr<Stmt> break_statement();
  std::unique_ptr<Stmt> returnStatement();
 std::vector<std::unique_ptr<Stmt>> block();
-  std::unique_ptr<Stmt>  function(std::string kind);
+  std::unique_ptr<Function>  function(std::string kind);
+    std::unique_ptr<Stmt>  classDeclaration();
 
  //Expr
     std::unique_ptr<Expr> primary();

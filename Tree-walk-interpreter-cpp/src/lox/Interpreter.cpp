@@ -6,6 +6,8 @@
 #include <variant>
 #include "LoxFunction.h"
 #include "ReturnVal.h"
+#include<unordered_map>
+#include "LoxClass.h"
 
 void Interpreter::check_numbered_operand(const Token& op, const Object& left, const Object& right) {
     if (std::holds_alternative<double>(right) && std::holds_alternative<double>(left)) return;
@@ -127,36 +129,39 @@ VisitorReturn Interpreter:: visitVariableExpr(const Variable &expr) {
 }
 ///variable resolution
 VisitorReturn Interpreter::  lookUpVariable(Token name, const Expr &expr) {
-  int distance = locals[expr];//wht if it is not?
-  if (distance != nullptr) {
-    return environment->getAt(distance, name.lexeme);
-  } else {
-    return globals->get(name);
-  }
+    auto it = locals.find(&expr);
+    if (it != locals.end()) {
+        int distance = it->second;
+        return environment->getAt(distance, name.lexeme);
+    } else {
+        return globals->get(name);
+    }
 }
 
 
 
 VisitorReturn Interpreter:: visitAssignExpr(const Assign & expr) {
          Object value = evaluate(*expr.value);
-         
-         
-         int distance = locals[expr];
-         
-         if (distance != nullptr) {
-             
+
+
+
+         auto it=locals.find(&expr);
+
+
+         if (it != locals.end()) {
+ int distance = it->second;
            environment->assignAt(distance, expr.name, value);
-           
+
          } else {
            globals->assign(expr.name, value);
          }
-         
-         
+
+
          environment->assign(expr.name, value);
-         
+
          return value;
        }
-       
+
 
 VisitorReturn Interpreter::visitBinaryExpr(const Binary& expr) {
     Object left = evaluate(*expr.left);
@@ -221,9 +226,9 @@ VisitorReturn Interpreter::visitConditionalExpr(const Conditional& expr) {
 }
 
 
-void Interpreter::interpret(std::vector<Stmt*> &statements) {
+void Interpreter::interpret(const std::vector<std::unique_ptr<Stmt>>& statements) {
     try {
-        for (const auto* stmt : statements) {
+        for (const auto& stmt : statements) {
             execute(*stmt);
         }
     } catch (const RuntimeError& error) {
@@ -336,8 +341,19 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
       }
 
+
+     void Interpreter:: visitClassStmt(const Class & stmt) {
+          environment->define(stmt.name.lexeme, std::monostate{});
+          LoxClass klass(stmt.name.lexeme);
+          environment->assign(stmt.name, klass);
+
+        }
+
+
        void Interpreter:: resolve(const Expr & expr, int depth) {
-        locals[exp]=depth;
+
+
+
+                  locals[&expr]=depth;
+
       }
-      
-      

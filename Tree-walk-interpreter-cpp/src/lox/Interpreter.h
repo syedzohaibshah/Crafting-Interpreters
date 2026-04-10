@@ -26,14 +26,14 @@ private:
     bool isTruthy(const Object& object);
     bool isEqual(const Object& a, const Object& b);
     void execute(const Stmt &stmt);
-    void resolve(const Expr & expr, int depth);
+
 VisitorReturn  lookUpVariable(Token name, const Expr &expr);
 public:
 
 std::shared_ptr<Environment> globals;
 
  std::shared_ptr<Environment>  environment;
- std::unordered_map<Expr, int> locals;
+ std::unordered_map<const Expr*, int> locals;
 
     VisitorReturn visitLiteralExpr(const Literal& expr) override;
     VisitorReturn  visitLogicalExpr(const Logical& expr)override;
@@ -56,18 +56,25 @@ std::shared_ptr<Environment> globals;
     void visitBreakStmt(const Break& stmt) override;
     void visitFunctionStmt(const Function& stmt)override;
      void visitReturnStmt(const Return & stmt) override;
+     void visitClassStmt(const Class & stmt) override;
+
+
     void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
                       std::shared_ptr<Environment> environment) ;
 
-    void interpret(std::vector<Stmt*> &statements);
 
-     //Interpreter() : environment(std::make_shared<Environment>()) {}
+    void interpret(const std::vector<std::unique_ptr<Stmt>>& statements);
+
+    void resolve(const Expr & expr, int depth);
+
+    // Interpreter() : environment(std::make_shared<Environment>()) {}
 Interpreter() {
     globals = std::make_shared<Environment>();
            environment = globals;
 
            globals->define("clock",
                   std::make_shared<ClockFunction>());
+
 }
 
 

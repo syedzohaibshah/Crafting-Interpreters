@@ -1,9 +1,9 @@
 CXX = g++
-CXXFLAGS = -std=c++20 -Wall -Wextra -MMD -MP
+CXXFLAGS = -std=c++20 -Wall -Wextra -MMD -MP -fsanitize=address -g
 
 TARGET = lox
 
-SRCS = main.cpp Lox.cpp Parser.cpp Scanner.cpp Token.cpp Interpreter.cpp Environment.cpp
+SRCS = main.cpp Lox.cpp Parser.cpp Scanner.cpp Token.cpp Interpreter.cpp Environment.cpp Resolver.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(TARGET)
