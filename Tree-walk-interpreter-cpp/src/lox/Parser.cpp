@@ -2,6 +2,7 @@
 #include "Parser.h"
 #include <initializer_list>
 #include <memory>
+#include <variant>
 #include <vector>
 
 #include "Lox.h"
@@ -27,6 +28,9 @@ std::unique_ptr<Expr> Parser::expression(){
              std::move(value));
 
          return expr;
+       }else if (auto get = dynamic_cast<Get*>(expr.get())) {  /////////////check
+
+               return std::make_unique<Set>(std::move(get->object), get->name, std::move(value));
        }
 
        error(equals, "Invalid assignment target.");
@@ -174,7 +178,12 @@ std::unique_ptr<Expr> Parser::  call() {
      while (true) {
        if (match({LEFT_PAREN})) {
          expr = finishCall(std::move(expr));
-       } else {
+       } else if (match({DOT})) {
+               Token name = consume(IDENTIFIER,
+                   "Expect property name after '.'.");
+               expr = std::make_unique<Get>(std::move(expr), name);
+       }
+       else {
          break;
        }
      }

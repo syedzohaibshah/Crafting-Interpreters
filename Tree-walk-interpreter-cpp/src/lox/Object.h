@@ -5,7 +5,7 @@
 #include <memory>
 
 class LoxCallable; // forward declare
-
+class LoxInstance;
 //(equivalent to java object) can hold one value from a fixed set of types, but only one at a time.
 
 using Object = std::variant<
@@ -13,5 +13,6 @@ using Object = std::variant<
     double,
     std::string,
     bool,
-    std::shared_ptr<LoxCallable>
+    std::shared_ptr<LoxCallable>,
+     std::shared_ptr<LoxInstance>
 >;

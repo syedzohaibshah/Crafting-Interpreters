@@ -2,18 +2,21 @@
 
 #pragma once
 
-class Object;
+#include "Object.h"
 #include "LoxCallable.h"
 
-class LoxClass:public LoxCallable {
+#include <vector>
+
+class LoxClass: public LoxCallable {
+  public:
   const std::string name;
-public:
+
   LoxClass(const std::string name):name(name){}
 
-std::string toString();
-  int arity() ;
-  
-  Object call(Interpreter *interpreter, 
-      vector<Object> &arguments);
+std::string toString()const override;
+  int arity()override ;
+
+  Object call(Interpreter *interpreter,
+      const std::vector<Object> &arguments)override;
 
 };

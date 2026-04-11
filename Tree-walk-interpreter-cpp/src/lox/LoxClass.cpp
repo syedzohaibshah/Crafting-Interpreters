@@ -4,26 +4,26 @@
 
 
 
+#include "LoxInstance.h"
+
+#include "LoxCallable.h"
 
 
 
 
-
-
-
-std::string LoxClass::toString() {
+std::string LoxClass::toString()const {
     return name;
   }
 
 
-  Object call(Interpreter* interpreter,
-      vector<Object> &arguments) {
+  Object LoxClass:: call(Interpreter* interpreter,
+      const std::vector<Object> &arguments) {
           
-    LoxInstance instance(this);
-    return instance;
+    auto cls = std::make_shared<LoxClass>(*this);
+    return std::make_shared<LoxInstance>(cls);
   }
 
 
-  int arity() {
+  int LoxClass::arity() {
     return 0;
   }

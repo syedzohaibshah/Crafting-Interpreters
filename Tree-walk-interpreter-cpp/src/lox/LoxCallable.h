@@ -2,6 +2,8 @@
 
 
 class Interpreter;
+
+#include <vector>
 class LoxCallable {
 public:
     virtual int arity() = 0;

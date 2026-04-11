@@ -234,3 +234,14 @@ void Resolver:: visitWhileStmt(const While & stmt) {
      }
 
      
+
+        VisitorReturn Resolver:: visitGetExpr(const Get &expr) {
+       resolve(*expr.object);
+       return std::monostate{};
+     }
+     
+  VisitorReturn Resolver:: visitSetExpr(const Set &expr) {
+       resolve(*expr.value);
+       resolve(*expr.object);
+      return std::monostate{};
+     }

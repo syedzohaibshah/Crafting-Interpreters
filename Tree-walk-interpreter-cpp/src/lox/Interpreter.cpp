@@ -3,11 +3,14 @@
 #include "Token.h"
 #include "Lox.h"
 #include <iostream>
+#include <memory>
 #include <variant>
 #include "LoxFunction.h"
 #include "ReturnVal.h"
 #include<unordered_map>
 #include "LoxClass.h"
+#include "LoxInstance.h"
+#include "Object.h"
 
 void Interpreter::check_numbered_operand(const Token& op, const Object& left, const Object& right) {
     if (std::holds_alternative<double>(right) && std::holds_alternative<double>(left)) return;
@@ -38,6 +41,13 @@ std::string Interpreter::stringify(const Object& object) {
     if (std::holds_alternative<bool>(object)) {
         return std::get<bool>(object) ? "true" : "false";
     }
+        if (std::holds_alternative<std::shared_ptr<LoxCallable>>(object)) {
+            return std::get<std::shared_ptr<LoxCallable>>(object)->toString();
+        }
+
+        if (std::holds_alternative<std::shared_ptr<LoxInstance>>(object)) {
+            return std::get<std::shared_ptr<LoxInstance>>(object)->toString();
+        }
 
     throw std::runtime_error("Unexpected object type");
 }
@@ -224,6 +234,31 @@ VisitorReturn Interpreter::visitConditionalExpr(const Conditional& expr) {
         return evaluate(*expr.elseBranch);
     }
 }
+///check
+VisitorReturn Interpreter:: visitGetExpr(const Get& expr) {
+  Object object = evaluate(*expr.object);
+  if (std::holds_alternative<std::shared_ptr<LoxInstance>>(object) ) {
+auto instance=std::get<std::shared_ptr<LoxInstance>>(object); // Object → variant → check type → extract → use
+    return instance->get(expr.name);
+  }
+
+  throw RuntimeError(expr.name,
+      "Only instances have properties.");
+}
+
+VisitorReturn Interpreter:: visitSetExpr(const Set& expr) {
+  Object object = evaluate(*expr.object);
+
+  if (!(std::holds_alternative<std::shared_ptr<LoxInstance>>(object) )) {
+    throw new RuntimeError(expr.name,
+                           "Only instances have fields.");
+  }
+
+  Object value = evaluate(*expr.value);
+  auto instance=std::get<std::shared_ptr<LoxInstance>>(object);
+instance->set(expr.name, value);
+  return value;
+}
 
 
 void Interpreter::interpret(const std::vector<std::unique_ptr<Stmt>>& statements) {
@@ -242,6 +277,8 @@ void Interpreter:: execute(const Stmt &stmt){
     stmt.accept(*this);
 }
 
+
+///////////////statments
 void Interpreter:: visitBlockStmt(const Block & stmt) {
      auto blockEnv = std::make_shared<Environment>(environment);
   executeBlock(stmt.statements, blockEnv);
@@ -344,7 +381,7 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
      void Interpreter:: visitClassStmt(const Class & stmt) {
           environment->define(stmt.name.lexeme, std::monostate{});
-          LoxClass klass(stmt.name.lexeme);
+          auto klass = std::make_shared<LoxClass>(stmt.name.lexeme);
           environment->assign(stmt.name, klass);
 
         }

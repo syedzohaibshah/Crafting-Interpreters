@@ -18,6 +18,8 @@ class Assign;
 class Logical;
 class Call;
 class FunctionExpr;
+class Get;
+class Set;
 
 using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
 
@@ -33,6 +35,9 @@ public:
     virtual VisitorReturn visitAssignExpr(const Assign &expr)=0;
     virtual VisitorReturn visitLogicalExpr(const Logical & expr)=0;
      virtual VisitorReturn visitCallExpr(const Call & expr)=0;
+      virtual VisitorReturn visitGetExpr(const Get & expr)=0;
+      virtual VisitorReturn visitSetExpr(const Set & expr)=0;
+
 
     virtual ~ExprVisitor() = default;
 };
@@ -171,4 +176,38 @@ public:
      VisitorReturn accept(ExprVisitor& visitor) const override {
          return visitor.visitCallExpr(*this);
        }
+ };
+
+
+ class Get :public Expr{
+     public:
+     std::unique_ptr<Expr> object;
+     Token name;
+
+
+     Get(std::unique_ptr<Expr> object,Token name)
+     :object(std::move(object)),name(name){}
+
+
+     VisitorReturn accept(ExprVisitor& visitor) const override {
+         return visitor.visitGetExpr(*this);
+       }
+ };
+
+
+ class Set :public Expr{
+     public:
+     std::unique_ptr<Expr> object;
+     Token name;
+     std::unique_ptr<Expr> value;
+
+
+     Set(std::unique_ptr<Expr> object,Token name,std::unique_ptr<Expr> value)
+     :object(std::move(object)),name(name),value(std::move(value)){}
+
+
+     VisitorReturn accept(ExprVisitor& visitor) const override {
+         return visitor.visitSetExpr(*this);
+       }
+       
  };

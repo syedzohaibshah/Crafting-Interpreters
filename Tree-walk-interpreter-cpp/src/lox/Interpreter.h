@@ -44,7 +44,8 @@ std::shared_ptr<Environment> globals;
     VisitorReturn visitVariableExpr(const Variable &expr) override;
     VisitorReturn visitAssignExpr(const Assign &expr) override;
     VisitorReturn visitCallExpr(const Call&expr) override;
-
+    VisitorReturn  visitGetExpr(const Get& expr) override;
+VisitorReturn  visitSetExpr(const Set& expr) override;
 
 
     void visitExpressionStmt(const Expression & stmt)override;

@@ -57,8 +57,7 @@ VisitorReturn  visitLiteralExpr(const Literal& expr)override;
 VisitorReturn visitLogicalExpr(const Logical &expr)override;
 VisitorReturn  visitUnaryExpr(const Unary &expr)override;
 VisitorReturn visitConditionalExpr(const Conditional &expr )override;
-
-
-
+VisitorReturn  visitGetExpr(const Get &expr) override;
+VisitorReturn  visitSetExpr(const Set &expr) override;
 
 };
