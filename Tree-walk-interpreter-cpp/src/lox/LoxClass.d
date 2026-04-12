@@ -1,9 +1,17 @@
-LoxClass.o: LoxClass.cpp LoxClass.h Object.h LoxCallable.h LoxInstance.h \
-  Token.h TokenType.h RuntimeError.h
+LoxClass.o: LoxClass.cpp LoxClass.h LoxFunction.h LoxCallable.h Object.h \
+  Stmt.h Token.h TokenType.h Expr.h Interpreter.h Environment.h \
+  RuntimeError.h ClockFunction.h ReturnVal.h LoxInstance.h
 LoxClass.h:
-Object.h:
+LoxFunction.h:
 LoxCallable.h:
-LoxInstance.h:
+Object.h:
+Stmt.h:
 Token.h:
 TokenType.h:
+Expr.h:
+Interpreter.h:
+Environment.h:
 RuntimeError.h:
+ClockFunction.h:
+ReturnVal.h:
+LoxInstance.h:

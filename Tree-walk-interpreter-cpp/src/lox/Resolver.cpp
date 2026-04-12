@@ -156,6 +156,11 @@ void Resolver:: visitReturnStmt(const Return &stmt) {
       Lox::error(stmt.keyword, "Can't return from top-level code.");
     }
        if (stmt.value != nullptr) {
+           
+           if (currentFunction == FunctionType::INITIALIZER) {
+             Lox::error(stmt.keyword,
+                 "Can't return a value from an initializer.");
+           }
          resolve(*stmt.value);
        }
 
@@ -174,14 +179,35 @@ void Resolver:: visitWhileStmt(const While & stmt) {
         //nothing
     }
 
-    
-    
+
+
  void Resolver:: visitClassStmt(const Class &stmt) {
+
+     ClassType enclosingClass = currentClass;
+         currentClass = ClassType::CLASS;
+
         declare(stmt.name);
         define(stmt.name);
-        
+
+
+
+        beginScope();
+        scopes.back()["this"] = true;
+
+
+        for (auto & method : stmt.methods) {
+            FunctionType declaration = FunctionType::METHOD;
+            
+            if (method->name.lexeme=="init") {
+                  declaration = FunctionType::INITIALIZER;
+                }
+            resolveFunction(*method, declaration);
+          }
+          endScope();
+    currentClass = enclosingClass;
+
       }
-      
+
      VisitorReturn Resolver:: visitBinaryExpr(const Binary& expr) {
        resolve(*expr.left);
        resolve(*expr.right);
@@ -228,20 +254,32 @@ void Resolver:: visitWhileStmt(const While & stmt) {
          resolve(*expr.condition);
          resolve(*expr.thenBranch);
          resolve(*expr.elseBranch);
-         
+
          return std::monostate{};
 
      }
 
-     
+
 
         VisitorReturn Resolver:: visitGetExpr(const Get &expr) {
        resolve(*expr.object);
        return std::monostate{};
      }
-     
+
   VisitorReturn Resolver:: visitSetExpr(const Set &expr) {
        resolve(*expr.value);
        resolve(*expr.object);
       return std::monostate{};
      }
+
+
+
+VisitorReturn Resolver:: visitThisExpr(const This &expr) {
+      if (currentClass == ClassType::NONE) {
+        Lox::error(expr.keyword,
+            "Can't use 'this' outside of a class.");
+        return std::monostate{};
+      }
+        resolveLocal(expr, expr.keyword);
+         return std::monostate{};
+      }

@@ -13,13 +13,13 @@ public:
     Environment(){
         enclosing=nullptr;
     }
- Environment(const std::shared_ptr<Environment>& enclosing) : enclosing(enclosing) {}
+ Environment(const std::shared_ptr<Environment> enclosing) : enclosing(enclosing) {}
  
     void define(std::string name,Object value);
     void assign(const Token name, const Object & value);
     Object get(const Token &name);
     Object getAt(int distance, std::string name);
-    Environment ancestor(int distance) ;
+    std::shared_ptr<Environment> ancestor(int distance) ;
     void assignAt(int distance, Token name, Object value);
 
 

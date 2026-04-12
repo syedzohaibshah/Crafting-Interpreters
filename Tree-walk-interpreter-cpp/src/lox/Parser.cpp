@@ -219,6 +219,9 @@ std::unique_ptr<Expr> Parser:: primary(){
     if(match({FALSE})) return std::make_unique<Literal>(false);
     if(match({TRUE})) return std::make_unique<Literal>(true);
     if(match({NIL})) return std::make_unique<Literal>(std::monostate{});
+   
+    if (match({THIS})) return std::make_unique<This>(previous());
+
 
 
     if(match({NUMBER,STRING})){
@@ -421,6 +424,7 @@ if(match({PRINT})) return print_statement();
    if(match({BREAK}))return break_statement();
 if(match({IF})) return if_statement();
 if (match({LEFT_BRACE})) return std::make_unique<Block>(block());
+
 
 return expression_statement();
   }

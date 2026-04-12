@@ -20,6 +20,7 @@ class Call;
 class FunctionExpr;
 class Get;
 class Set;
+class This;
 
 using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
 
@@ -37,6 +38,7 @@ public:
      virtual VisitorReturn visitCallExpr(const Call & expr)=0;
       virtual VisitorReturn visitGetExpr(const Get & expr)=0;
       virtual VisitorReturn visitSetExpr(const Set & expr)=0;
+      virtual VisitorReturn visitThisExpr(const This & expr)=0;
 
 
     virtual ~ExprVisitor() = default;
@@ -209,5 +211,23 @@ public:
      VisitorReturn accept(ExprVisitor& visitor) const override {
          return visitor.visitSetExpr(*this);
        }
-       
+
+ };
+
+
+
+ class This :public Expr{
+     public:
+
+     Token keyword;
+
+
+
+     This(Token keyword) :keyword(keyword){}
+
+
+     VisitorReturn accept(ExprVisitor& visitor) const override {
+         return visitor.visitThisExpr(*this);
+       }
+
  };

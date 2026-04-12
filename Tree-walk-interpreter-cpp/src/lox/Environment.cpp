@@ -1,4 +1,5 @@
 #include "Environment.h"
+#include <memory>
 
 
 
@@ -42,21 +43,21 @@ if(enclosing!=nullptr){
 
 
 Object Environment:: getAt(int distance, std::string name) {
-  return ancestor(distance).values[name];
+  return ancestor(distance)->values[name];
 }
 
 
-  Environment Environment:: ancestor(int distance) {
-    Environment environment = *this;
+  std::shared_ptr<Environment>  Environment:: ancestor(int distance) {
+    std::shared_ptr<Environment>  environment = std::make_shared<Environment>(*this);
     for (int i = 0; i < distance; i++) {
-      environment = environment.enclosing; 
+      environment = environment->enclosing;
     }
 
     return environment;
   }
 
-  
+
   void Environment:: assignAt(int distance, Token name, Object value) {
-      
-    ancestor(distance).values[name.lexeme]= value;
+
+    ancestor(distance)->values[name.lexeme]= value;
   }

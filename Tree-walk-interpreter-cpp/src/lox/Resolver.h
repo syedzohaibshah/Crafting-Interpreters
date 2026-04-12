@@ -2,8 +2,9 @@
 #include "Interpreter.h"
 #include "Expr.h"
 #include "Stmt.h"
-#include "FunctionType.h"
+#include "Types.h"
 #include <memory>
+
 
 
 
@@ -11,6 +12,8 @@ class Resolver : public ExprVisitor,public StmtVisitor{
 
 
     std::vector<std::unordered_map<std::string, bool>> scopes;
+    ClassType currentClass = ClassType::NONE;
+
     FunctionType currentFunction = FunctionType::NONE;
     Interpreter* interpreter;
 
@@ -46,8 +49,8 @@ class Resolver : public ExprVisitor,public StmtVisitor{
   void  visitWhileStmt(const While & stmt) override;
  void visitBreakStmt(const Break& stmt)override;
  void visitClassStmt(const Class &stmt) override;
- 
- 
+
+
 VisitorReturn visitVariableExpr(const Variable &expr) override;
 VisitorReturn visitAssignExpr(const Assign & expr)override;
 VisitorReturn visitBinaryExpr(const Binary& expr) override;
@@ -59,5 +62,6 @@ VisitorReturn  visitUnaryExpr(const Unary &expr)override;
 VisitorReturn visitConditionalExpr(const Conditional &expr )override;
 VisitorReturn  visitGetExpr(const Get &expr) override;
 VisitorReturn  visitSetExpr(const Set &expr) override;
+  VisitorReturn visitThisExpr(const This &expr) override;
 
 };

@@ -10,11 +10,12 @@
 class LoxFunction : public LoxCallable {
 
     const Function* declaration;
-    std::shared_ptr<Environment> closure; 
-public:
+    std::shared_ptr<Environment> closure;
+     bool isInitializer;
 
-    LoxFunction(const Function* declaration,std::shared_ptr<Environment> closure)
-        : declaration(declaration),closure(closure) {}
+public:
+    LoxFunction(const Function* declaration,std::shared_ptr<Environment> closure,bool isInitializer)
+        : declaration(declaration),closure(closure),isInitializer(isInitializer) {}
 
     int arity() override {
    //std::cout << "function " << declaration->name.lexeme << " has "
@@ -41,11 +42,23 @@ public:
         try {
           interpreter->executeBlock(declaration->body, environment);
         } catch (ReturnVal returnValue) {
+              if (isInitializer) return closure->getAt(0, "this");
           return returnValue.value;
         }
 
 
-
+        if (isInitializer) return closure->getAt(0, "this");
         return std::monostate{};
     }
+
+    std::shared_ptr<LoxFunction>  bind(std::shared_ptr<LoxInstance> instance) {
+         auto environment = std::make_shared<Environment>(closure);
+
+       environment->define("this", instance); //intersting situation we have to pass Object
+       
+       
+       return std::make_shared<LoxFunction>(declaration, environment,isInitializer);
+     }
+     
+     
 };

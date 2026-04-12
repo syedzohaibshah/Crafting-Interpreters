@@ -4,6 +4,7 @@
 #include "Lox.h"
 #include <iostream>
 #include <memory>
+#include <string>
 #include <variant>
 #include "LoxFunction.h"
 #include "ReturnVal.h"
@@ -11,6 +12,7 @@
 #include "LoxClass.h"
 #include "LoxInstance.h"
 #include "Object.h"
+#include "TokenType.h"
 
 void Interpreter::check_numbered_operand(const Token& op, const Object& left, const Object& right) {
     if (std::holds_alternative<double>(right) && std::holds_alternative<double>(left)) return;
@@ -261,6 +263,10 @@ instance->set(expr.name, value);
 }
 
 
+VisitorReturn Interpreter:: visitThisExpr(const This &expr) {
+  return lookUpVariable(expr.keyword, expr);
+}
+
 void Interpreter::interpret(const std::vector<std::unique_ptr<Stmt>>& statements) {
     try {
         for (const auto& stmt : statements) {
@@ -313,7 +319,7 @@ void Interpreter::visitExpressionStmt(const Expression & stmt){
 
 void Interpreter:: visitFunctionStmt(const Function& stmt) {
 
-  auto function = std::make_shared<LoxFunction>(&stmt,environment);
+  auto function = std::make_shared<LoxFunction>(&stmt,environment,false);
 
   environment->define(stmt.name.lexeme, function);
 
@@ -381,7 +387,19 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
      void Interpreter:: visitClassStmt(const Class & stmt) {
           environment->define(stmt.name.lexeme, std::monostate{});
-          auto klass = std::make_shared<LoxClass>(stmt.name.lexeme);
+
+
+          std::unordered_map<std::string,std::shared_ptr<LoxFunction>> methods;
+          for(auto & method:stmt.methods){
+
+               auto function  = std::make_shared<LoxFunction>(method.get(),environment,
+                   method->name.lexeme=="init");
+               methods[method->name.lexeme]=function;
+          }
+
+
+
+          auto klass = std::make_shared<LoxClass>(stmt.name.lexeme,methods);
           environment->assign(stmt.name, klass);
 
         }
