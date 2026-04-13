@@ -205,7 +205,11 @@ class Class :public Stmt{
 public:
      Token name;
      std::vector< std::unique_ptr<Function>>methods;
-    Class(Token name,std::vector< std::unique_ptr<Function>>methods):name(name),methods(std::move(methods)){}
+     std::vector<std::unique_ptr<Function>> staticMethods;
+     
+    Class(Token name,std::vector<std::unique_ptr<Function>>methods,
+        std::vector<std::unique_ptr<Function>> staticMethods)
+    :name(name),methods(std::move(methods)),staticMethods(std::move(staticMethods)){}
 
     void  accept(StmtVisitor & visitor) const override {
         return visitor.visitClassStmt(*this);

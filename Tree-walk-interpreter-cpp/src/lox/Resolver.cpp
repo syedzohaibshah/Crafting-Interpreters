@@ -156,7 +156,7 @@ void Resolver:: visitReturnStmt(const Return &stmt) {
       Lox::error(stmt.keyword, "Can't return from top-level code.");
     }
        if (stmt.value != nullptr) {
-           
+
            if (currentFunction == FunctionType::INITIALIZER) {
              Lox::error(stmt.keyword,
                  "Can't return a value from an initializer.");
@@ -197,12 +197,19 @@ void Resolver:: visitWhileStmt(const While & stmt) {
 
         for (auto & method : stmt.methods) {
             FunctionType declaration = FunctionType::METHOD;
-            
+
             if (method->name.lexeme=="init") {
                   declaration = FunctionType::INITIALIZER;
                 }
             resolveFunction(*method, declaration);
           }
+           // Static methods: no "this" in scope.
+          for (auto & method : stmt.staticMethods) {
+
+              resolveFunction(*method,FunctionType::FUNCTION);
+            }
+
+
           endScope();
     currentClass = enclosingClass;
 

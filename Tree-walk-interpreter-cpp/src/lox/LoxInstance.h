@@ -1,13 +1,18 @@
 #pragma once
 
-#include "LoxClass.h"
+
 #include <unordered_map>
+
 
 #include "LoxFunction.h"
 #include "Object.h"
 #include "Token.h"
 #include "RuntimeError.h"
-class LoxInstance :public std::enable_shared_from_this<LoxInstance>{
+
+
+class LoxClass;
+
+class LoxInstance : public std::enable_shared_from_this<LoxInstance> {
 
 
 public:

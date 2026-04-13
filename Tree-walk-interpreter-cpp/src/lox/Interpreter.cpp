@@ -239,11 +239,20 @@ VisitorReturn Interpreter::visitConditionalExpr(const Conditional& expr) {
 ///check
 VisitorReturn Interpreter:: visitGetExpr(const Get& expr) {
   Object object = evaluate(*expr.object);
-  if (std::holds_alternative<std::shared_ptr<LoxInstance>>(object) ) {
+  if (std::holds_alternative<std::shared_ptr<LoxInstance>>(object)   ) {
 auto instance=std::get<std::shared_ptr<LoxInstance>>(object); // Object → variant → check type → extract → use
     return instance->get(expr.name);
   }
 
+  // Handle class static methods
+if(std::holds_alternative<std::shared_ptr<LoxCallable>>(object)){
+     auto callable=std::get<std::shared_ptr<LoxCallable>>(object);
+
+     if (auto klass = dynamic_cast<LoxClass*>(callable.get())) {
+       auto method = klass->metaclass->findMethod(expr.name.lexeme);
+       if (method != nullptr) return Object{method};;
+     }
+}
   throw RuntimeError(expr.name,
       "Only instances have properties.");
 }
@@ -388,8 +397,13 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
      void Interpreter:: visitClassStmt(const Class & stmt) {
           environment->define(stmt.name.lexeme, std::monostate{});
 
-
+           // instance methods
           std::unordered_map<std::string,std::shared_ptr<LoxFunction>> methods;
+
+
+          // static methods
+          std::unordered_map<std::string, std::shared_ptr<LoxFunction>> staticMethods;
+
           for(auto & method:stmt.methods){
 
                auto function  = std::make_shared<LoxFunction>(method.get(),environment,
@@ -398,8 +412,23 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
           }
 
 
+          for (auto& method : stmt.staticMethods) {
+              staticMethods[method->name.lexeme] =
+                  std::make_shared<LoxFunction>(method.get(), environment, false);
+          }
 
-          auto klass = std::make_shared<LoxClass>(stmt.name.lexeme,methods);
+          // create metaclass (holds static methods)
+          auto metaclass = std::make_shared<LoxClass>(
+              stmt.name.lexeme + " metaclass",
+              staticMethods,
+              nullptr
+          );
+          // create actual class
+          auto klass = std::make_shared<LoxClass>(
+              stmt.name.lexeme,
+              methods,
+               std::move(metaclass)
+          );
           environment->assign(stmt.name, klass);
 
         }

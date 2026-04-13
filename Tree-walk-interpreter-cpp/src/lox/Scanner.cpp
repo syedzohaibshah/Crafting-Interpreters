@@ -22,7 +22,8 @@ std::unordered_map<std::string, TokenType> Scanner::keywords = {
     {"true", TRUE},
     {"var", VAR},
     {"break", BREAK},
-    {"while", WHILE}
+    {"while", WHILE},
+    {"static", STATIC}
 };
 
 

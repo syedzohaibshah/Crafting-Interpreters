@@ -219,7 +219,7 @@ std::unique_ptr<Expr> Parser:: primary(){
     if(match({FALSE})) return std::make_unique<Literal>(false);
     if(match({TRUE})) return std::make_unique<Literal>(true);
     if(match({NIL})) return std::make_unique<Literal>(std::monostate{});
-   
+
     if (match({THIS})) return std::make_unique<This>(previous());
 
 
@@ -437,14 +437,24 @@ return expression_statement();
          consume(LEFT_BRACE, "Expect '{' before class body.");
 
          std::vector<std::unique_ptr<Function>> methods;
+         std::vector<std::unique_ptr<Function>> staticMethods;
 
          while (!check(RIGHT_BRACE) && !is_at_end()) {
-           methods.push_back(function("method")); //check
+
+             if (match({STATIC})) {
+                 staticMethods.push_back(function("method"));
+             } else {
+                 methods.push_back(function("method"));
+             }
          }
 
          consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-         return std::make_unique<Class>(name,std::move(methods));
+         return std::make_unique<Class>(
+             name,
+             std::move(methods),
+             std::move(staticMethods)
+         );
 
 
   }
