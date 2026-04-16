@@ -1,7 +1,21 @@
-class Math {
-  static square(n) {
-    return n * n;
+
+
+class A {
+  method() {
+    print "A method";
   }
 }
 
-print Math.square(3);
+class B < A {
+  method() {
+    print "B method";
+  }
+
+  test() {
+    super.method();
+  }
+}
+
+class C < B {}
+
+C().test();

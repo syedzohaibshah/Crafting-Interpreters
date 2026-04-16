@@ -18,7 +18,7 @@ std::string LoxClass::toString()const {
   }
 
 
-  Object LoxClass:: call(Interpreter* interpreter,
+  Object LoxClass:: call(std::shared_ptr<Interpreter> interpreter,
       const std::vector<Object> &arguments) {
 
     auto instance = std::make_shared<LoxInstance>(shared_from_this());
@@ -48,5 +48,8 @@ std::string LoxClass::toString()const {
 
           return methods[name];
       }
+      if (superclass != nullptr) {
+          return superclass->findMethod(name);
+        }
       return nullptr;
   }

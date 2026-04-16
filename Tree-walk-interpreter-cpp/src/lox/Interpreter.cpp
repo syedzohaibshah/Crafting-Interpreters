@@ -1,7 +1,9 @@
 #include "Interpreter.h"
+#include "Environment.h"
 #include "RuntimeError.h"
 #include "Token.h"
 #include "Lox.h"
+#include <cstddef>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -130,7 +132,7 @@ VisitorReturn  Interpreter:: visitCallExpr(const Call& expr) {
       }
 
 
-      return  function->call(this, arguments);
+      return  function->call(shared_from_this(), arguments);
     }
 
 
@@ -246,12 +248,13 @@ auto instance=std::get<std::shared_ptr<LoxInstance>>(object); // Object → vari
 
   // Handle class static methods
 if(std::holds_alternative<std::shared_ptr<LoxCallable>>(object)){
-     auto callable=std::get<std::shared_ptr<LoxCallable>>(object);
-
-     if (auto klass = dynamic_cast<LoxClass*>(callable.get())) {
+   auto klass = asClass(object);
+   if (!klass) {
+       throw RuntimeError(expr.name,"Expected class.");
+   }
        auto method = klass->metaclass->findMethod(expr.name.lexeme);
-       if (method != nullptr) return Object{method};;
-     }
+       if (method != nullptr) return VisitorReturn{method};;
+
 }
   throw RuntimeError(expr.name,
       "Only instances have properties.");
@@ -261,7 +264,7 @@ VisitorReturn Interpreter:: visitSetExpr(const Set& expr) {
   Object object = evaluate(*expr.object);
 
   if (!(std::holds_alternative<std::shared_ptr<LoxInstance>>(object) )) {
-    throw new RuntimeError(expr.name,
+    throw RuntimeError(expr.name,
                            "Only instances have fields.");
   }
 
@@ -276,6 +279,35 @@ VisitorReturn Interpreter:: visitThisExpr(const This &expr) {
   return lookUpVariable(expr.keyword, expr);
 }
 
+VisitorReturn Interpreter:: visitSuperExpr(const Super & expr) {
+  auto it = locals.find(&expr);
+  int distance = it->second;
+
+
+  //get superclass
+  std::shared_ptr<LoxClass> superclass = asClass(environment->getAt(distance, "super"));
+  if (!superclass) {
+      throw RuntimeError(expr.keyword,"Expected class.");
+  }
+
+ // get this
+  auto object = asInstance(environment->getAt(distance - 1, "this"));
+  if (!object) {
+      throw RuntimeError(expr.keyword,"Expected 'this' to be a LoxInstance.");
+  }
+
+
+  std::shared_ptr<LoxFunction> method = superclass->findMethod(expr.method.lexeme);
+  if (method == nullptr) {
+    throw  RuntimeError(expr.method,
+        "Undefined property '" + expr.method.lexeme + "'.");
+  }
+
+  return method->bind(object); ///shitttttt it returning Function but we have vistor return type
+
+  // Object superclass = environment->getAt(distance, "super"); //shitttttttt
+}
+
 void Interpreter::interpret(const std::vector<std::unique_ptr<Stmt>>& statements) {
     try {
         for (const auto& stmt : statements) {
@@ -287,6 +319,8 @@ void Interpreter::interpret(const std::vector<std::unique_ptr<Stmt>>& statements
         std::cerr << "Interpreter internal error: " << ex.what() << '\n';
     }
 }
+
+
 
 void Interpreter:: execute(const Stmt &stmt){
     stmt.accept(*this);
@@ -395,14 +429,35 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
 
      void Interpreter:: visitClassStmt(const Class & stmt) {
-          environment->define(stmt.name.lexeme, std::monostate{});
+         environment->define(stmt.name.lexeme, std::monostate{});
+
+        //first handle inhertance(superclass)
+         Object superclass = std::monostate{};
+            if (stmt.superclass != nullptr) {
+              superclass = evaluate(*stmt.superclass);
+
+             // first check superclass is LoxCallable  as variant(object)contain Loxcallable not loxclass
+              if (!(std::holds_alternative<std::shared_ptr<LoxCallable>>(superclass))) {
+                throw  RuntimeError(stmt.superclass->name,
+                    "Superclass must be a class.");
+              }
+              //then check if superclass is locClass derived from LoxCallable
+              auto callable = std::get<std::shared_ptr<LoxCallable>>(superclass);
+                if (!dynamic_cast<LoxClass*>(callable.get())) {
+                    throw RuntimeError(stmt.superclass->name,
+                        "Superclass must be a class.");
+                }
+              //create enother env inside class enc so that it hold superclass mapping
+               environment = std::make_shared<Environment>(environment);
+
+               environment->define("super", superclass);
+            }
+
+
+         // environment->define(stmt.name.lexeme, std::monostate{});
 
            // instance methods
           std::unordered_map<std::string,std::shared_ptr<LoxFunction>> methods;
-
-
-          // static methods
-          std::unordered_map<std::string, std::shared_ptr<LoxFunction>> staticMethods;
 
           for(auto & method:stmt.methods){
 
@@ -410,8 +465,9 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
                    method->name.lexeme=="init");
                methods[method->name.lexeme]=function;
           }
+          std::unordered_map<std::string, std::shared_ptr<LoxFunction>> staticMethods;
 
-
+  // static methods
           for (auto& method : stmt.staticMethods) {
               staticMethods[method->name.lexeme] =
                   std::make_shared<LoxFunction>(method.get(), environment, false);
@@ -421,14 +477,24 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
           auto metaclass = std::make_shared<LoxClass>(
               stmt.name.lexeme + " metaclass",
               staticMethods,
+              nullptr,
               nullptr
+
           );
           // create actual class
           auto klass = std::make_shared<LoxClass>(
               stmt.name.lexeme,
               methods,
-               std::move(metaclass)
+               std::move(metaclass),
+               std::holds_alternative<std::monostate>(superclass)
+                       ? nullptr
+                       : std::dynamic_pointer_cast<LoxClass>(std::get<std::shared_ptr<LoxCallable>>(superclass)) // if there is superclass
+                            //  superclass(Object)->get Loxcallable from object ->downcast loxcallable to LoxClass(as inherited)
           );
+
+          if (!std::holds_alternative<std::monostate>(superclass)) {
+            environment = environment->enclosing;
+          }
           environment->assign(stmt.name, klass);
 
         }
@@ -440,4 +506,19 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
                   locals[&expr]=depth;
 
+      }
+
+
+      std::shared_ptr<LoxClass> Interpreter:: asClass(const Object& obj) {
+          if (auto callable = std::get_if<std::shared_ptr<LoxCallable>>(&obj)) {
+              return std::dynamic_pointer_cast<LoxClass>(*callable);
+          }
+          return nullptr;
+      }
+
+      std::shared_ptr<LoxInstance> Interpreter:: asInstance(const Object& obj) {
+          if (auto ptr = std::get_if<std::shared_ptr<LoxInstance>>(&obj)) {
+              return *ptr;
+          }
+          return nullptr;
       }

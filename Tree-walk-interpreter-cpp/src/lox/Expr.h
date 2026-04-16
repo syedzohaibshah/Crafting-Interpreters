@@ -21,6 +21,7 @@ class FunctionExpr;
 class Get;
 class Set;
 class This;
+class Super;
 
 using VisitorReturn = std::variant<std::string, Object, std::nullptr_t>;
 
@@ -35,10 +36,12 @@ public:
     virtual VisitorReturn visitVariableExpr(const Variable &expr)=0;
     virtual VisitorReturn visitAssignExpr(const Assign &expr)=0;
     virtual VisitorReturn visitLogicalExpr(const Logical & expr)=0;
-     virtual VisitorReturn visitCallExpr(const Call & expr)=0;
-      virtual VisitorReturn visitGetExpr(const Get & expr)=0;
-      virtual VisitorReturn visitSetExpr(const Set & expr)=0;
-      virtual VisitorReturn visitThisExpr(const This & expr)=0;
+    virtual VisitorReturn visitCallExpr(const Call & expr)=0;
+    virtual VisitorReturn visitGetExpr(const Get & expr)=0;
+    virtual VisitorReturn visitSetExpr(const Set & expr)=0;
+    virtual VisitorReturn visitThisExpr(const This & expr)=0;
+    virtual VisitorReturn visitSuperExpr(const Super & expr)=0;
+    
 
 
     virtual ~ExprVisitor() = default;
@@ -229,5 +232,25 @@ public:
      VisitorReturn accept(ExprVisitor& visitor) const override {
          return visitor.visitThisExpr(*this);
        }
+
+ };
+
+ 
+ class Super :public Expr{
+     public:
+
+     Token keyword;
+     Token method;
+
+
+
+     Super(Token keyword,Token method) :keyword(keyword),method(method){}
+
+
+     VisitorReturn accept(ExprVisitor& visitor) const override {
+         return visitor.visitSuperExpr(*this);
+       }
+       
+       
 
  };

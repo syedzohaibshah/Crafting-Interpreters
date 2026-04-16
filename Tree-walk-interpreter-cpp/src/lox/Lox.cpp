@@ -74,21 +74,21 @@ void Lox::run(const std::string& source){
        
    
 
-   static Interpreter interpreter;
+auto interpreter = std::make_shared<Interpreter>();
    
    
    //storing statements for multiple prompt
    
 
     //resolver
-  Resolver resolver(&interpreter);
+  Resolver resolver(interpreter);
    resolver.resolve(statements);
    
    //skip interpreting  if error in reolver
    if (had_error) return;
 
    
-   interpreter.interpret(statements);
+   interpreter->interpret(statements);
 }
 
 void Lox::error(int line,const std::string &message){

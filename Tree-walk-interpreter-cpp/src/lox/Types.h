@@ -13,5 +13,6 @@ enum class  FunctionType {
 
 enum ClassType {
  NONE,
- CLASS
+ CLASS,
+ SUBCLASS
 };

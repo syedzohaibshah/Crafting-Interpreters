@@ -4,6 +4,7 @@
 #include "Stmt.h"
 #include "Types.h"
 #include <memory>
+#include <deque>
 
 
 
@@ -11,11 +12,11 @@
 class Resolver : public ExprVisitor,public StmtVisitor{
 
 
-    std::vector<std::unordered_map<std::string, bool>> scopes;
+    std::deque<std::unordered_map<std::string, bool>> scopes;
     ClassType currentClass = ClassType::NONE;
 
     FunctionType currentFunction = FunctionType::NONE;
-    Interpreter* interpreter;
+std::shared_ptr<Interpreter> interpreter;
 
 
     //helpers:
@@ -34,7 +35,7 @@ class Resolver : public ExprVisitor,public StmtVisitor{
  void resolve(const Expr &expr);
 
 
- Resolver(Interpreter* interpreter):interpreter(interpreter){}
+ Resolver(std::shared_ptr<Interpreter> interpreter):interpreter(interpreter){}
 
 
 
@@ -63,5 +64,6 @@ VisitorReturn visitConditionalExpr(const Conditional &expr )override;
 VisitorReturn  visitGetExpr(const Get &expr) override;
 VisitorReturn  visitSetExpr(const Set &expr) override;
   VisitorReturn visitThisExpr(const This &expr) override;
+  VisitorReturn visitSuperExpr(const Super&  expr) override;
 
 };

@@ -7,9 +7,10 @@
 
 
 class Environment{
-    std::unordered_map<std::string,Object> values;
-    std::shared_ptr<Environment> enclosing;
+   
 public:
+std::unordered_map<std::string,Object> values;
+std::shared_ptr<Environment> enclosing;
     Environment(){
         enclosing=nullptr;
     }

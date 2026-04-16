@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Token.h"
+#include <mutex>
 #include <vector>
 #include "Expr.h"
 class Expression;
@@ -204,12 +205,15 @@ public:
 class Class :public Stmt{
 public:
      Token name;
-     std::vector< std::unique_ptr<Function>>methods;
+     std::vector< std::shared_ptr<Function>>methods;
      std::vector<std::unique_ptr<Function>> staticMethods;
-     
-    Class(Token name,std::vector<std::unique_ptr<Function>>methods,
-        std::vector<std::unique_ptr<Function>> staticMethods)
-    :name(name),methods(std::move(methods)),staticMethods(std::move(staticMethods)){}
+     std::unique_ptr<Variable> superclass;
+
+    Class(Token name,std::vector<std::shared_ptr<Function>>methods,
+        std::vector<std::unique_ptr<Function>> staticMethods,std::unique_ptr<Variable> superclass)
+    :name(name),methods(std::move(methods)),staticMethods(std::move(staticMethods)),
+        superclass(std::move(superclass)){}
+
 
     void  accept(StmtVisitor & visitor) const override {
         return visitor.visitClassStmt(*this);

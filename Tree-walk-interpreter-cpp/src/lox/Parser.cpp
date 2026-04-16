@@ -219,6 +219,13 @@ std::unique_ptr<Expr> Parser:: primary(){
     if(match({FALSE})) return std::make_unique<Literal>(false);
     if(match({TRUE})) return std::make_unique<Literal>(true);
     if(match({NIL})) return std::make_unique<Literal>(std::monostate{});
+    if(match({SUPER})){
+        Token keyword = previous();
+              consume(DOT, "Expect '.' after 'super'.");
+              Token method = consume(IDENTIFIER,
+                  "Expect superclass method name.");
+              return std::make_unique<Super>(keyword, method);
+    }
 
     if (match({THIS})) return std::make_unique<This>(previous());
 
@@ -434,9 +441,17 @@ return expression_statement();
   std::unique_ptr<Stmt>  Parser:: classDeclaration(){
 
       Token name = consume(IDENTIFIER, "Expect class name.");
+      
+      ///handle superclass
+      std::unique_ptr<Variable> superclass = nullptr;
+      if (match({LESS})) {
+        consume(IDENTIFIER, "Expect superclass name.");
+        superclass = std::make_unique<Variable>(previous());
+      }
+      ///
          consume(LEFT_BRACE, "Expect '{' before class body.");
 
-         std::vector<std::unique_ptr<Function>> methods;
+         std::vector<std::shared_ptr<Function>> methods;
          std::vector<std::unique_ptr<Function>> staticMethods;
 
          while (!check(RIGHT_BRACE) && !is_at_end()) {
@@ -453,7 +468,8 @@ return expression_statement();
          return std::make_unique<Class>(
              name,
              std::move(methods),
-             std::move(staticMethods)
+             std::move(staticMethods),
+             std::move(superclass)
          );
 
 

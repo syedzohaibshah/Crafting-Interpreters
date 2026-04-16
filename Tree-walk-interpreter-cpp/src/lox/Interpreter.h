@@ -1,5 +1,6 @@
 #pragma once
 #include "Expr.h"
+#include "LoxClass.h"
 #include"Stmt.h"
 #include <future>          //observations:: stsmt return voi and expr return Object
 #include <memory>
@@ -13,10 +14,11 @@
 
 class Token;
 class RuntimeError;
+class LoxClass;
 
 class BreakException {};
 
-class Interpreter : public ExprVisitor,public StmtVisitor {  //...
+class Interpreter : public ExprVisitor,public StmtVisitor,public std::enable_shared_from_this<Interpreter> {  //...
 private:
 
 
@@ -26,8 +28,11 @@ private:
     bool isTruthy(const Object& object);
     bool isEqual(const Object& a, const Object& b);
     void execute(const Stmt &stmt);
+    std::shared_ptr<LoxClass> asClass(const Object& obj) ;
+        std::shared_ptr<LoxInstance> asInstance(const Object& obj);
 
 VisitorReturn  lookUpVariable(Token name, const Expr &expr);
+
 public:
 
 std::shared_ptr<Environment> globals;
@@ -47,6 +52,7 @@ std::shared_ptr<Environment> globals;
     VisitorReturn  visitGetExpr(const Get& expr) override;
 VisitorReturn  visitSetExpr(const Set& expr) override;
 VisitorReturn visitThisExpr(const This &expr) override;
+VisitorReturn visitSuperExpr(const Super & expr) override;
 
 
     void visitExpressionStmt(const Expression & stmt)override;

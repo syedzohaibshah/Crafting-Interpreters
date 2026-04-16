@@ -13,7 +13,7 @@ public:
         return 0;
     }
 
-    Object call(Interpreter* interpreter,
+    Object call(std::shared_ptr<Interpreter> interpreter,
                 const std::vector<Object>& arguments) override {
 
         using namespace std::chrono;
