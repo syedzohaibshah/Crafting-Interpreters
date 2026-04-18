@@ -27,14 +27,14 @@ private:
     std::string stringify(const Object& object);
     bool isTruthy(const Object& object);
     bool isEqual(const Object& a, const Object& b);
-    void execute(const Stmt &stmt);
+
     std::shared_ptr<LoxClass> asClass(const Object& obj) ;
         std::shared_ptr<LoxInstance> asInstance(const Object& obj);
 
 VisitorReturn  lookUpVariable(Token name, const Expr &expr);
 
 public:
-
+void execute(const Stmt &stmt);
 std::shared_ptr<Environment> globals;
 
  std::shared_ptr<Environment>  environment;

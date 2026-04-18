@@ -16,6 +16,8 @@ public:
 };
 
 class Parser{
+    
+    public:
 
     std::vector<Token> tokens;
     int current=0;
@@ -72,7 +74,7 @@ std::vector<std::unique_ptr<Stmt>> block();
 
      ParseError error(const Token & token,const std::string &message);
 
-    public:
+    
     Parser(std::vector<Token> &tokens):tokens(tokens){}
 std::vector<std::unique_ptr<Stmt>> parse();
 

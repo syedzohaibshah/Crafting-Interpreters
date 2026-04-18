@@ -34,7 +34,7 @@ std::shared_ptr<Interpreter> interpreter;
  void resolve(const Stmt &stmt);
  void resolve(const Expr &expr);
 
-
+    Resolver() = default; 
  Resolver(std::shared_ptr<Interpreter> interpreter):interpreter(interpreter){}
 
 

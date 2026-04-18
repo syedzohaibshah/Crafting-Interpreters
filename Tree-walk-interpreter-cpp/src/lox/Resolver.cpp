@@ -16,8 +16,11 @@ void Resolver:: visitBlockStmt(const Block &stmt) {
 void  Resolver :: resolve(const std::vector<std::unique_ptr<Stmt>>& statements) {
 
   for (auto  & statement : statements) {
+      
     resolve(*statement);
+    
   }
+  
 }
 
 
