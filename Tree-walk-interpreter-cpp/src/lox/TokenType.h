@@ -22,7 +22,7 @@ enum class TokenType{
       // Keywords.
       AND, CLASS, ELSE, FALSE, FUN, FOR, IF, NIL, OR,
       PRINT, RETURN, SUPER, THIS, TRUE, VAR, WHILE,
-      STATIC,
+      STATIC,TRAIT,WITH,
 
       //
      BREAK,
@@ -42,7 +42,7 @@ inline std::string tokenTypeToString(TokenType type) {
         "IDENTIFIER", "STRING", "NUMBER",
         "AND", "CLASS", "ELSE", "FALSE", "FUN", "FOR", "IF", "NIL", "OR",
         "PRINT", "RETURN", "SUPER", "THIS", "TRUE", "VAR", "WHILE",
-        "END_OF_FILE"
+        "END_OF_FILE","STATIC","WITH"
     };
     return names[static_cast<int>(type)];
 }

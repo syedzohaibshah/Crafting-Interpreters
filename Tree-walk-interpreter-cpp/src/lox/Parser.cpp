@@ -358,6 +358,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 
         if (match({FUN})) return function("function");
         if (match({VAR})) return varDeclaration();
+        if(match({TRAIT})) return traitDeclaration();
         return statement();
 
       }catch(const ParseError &error ){
@@ -370,6 +371,29 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse(){
 
   }
 
+  //A trait is a reusable set of methods that can be composed into a class.
+std::unique_ptr<Stmt> Parser:: traitDeclaration(){
+    
+        Token name=consume(IDENTIFIER,"expect trait name");
+       
+       consume(LEFT_BRACE, "Expect '{' before trait body.");
+       
+        std::vector<std::shared_ptr<Function>> methods;
+        
+        while (!check(RIGHT_BRACE) && !is_at_end()) {
+            
+            methods.push_back(function("method"));
+            
+        }
+       
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return std::make_unique<Trait>(
+            name,
+            std::move(methods)
+        );
+       
+   }
 
 
  std::unique_ptr<Stmt>   Parser::varDeclaration(){
@@ -448,11 +472,25 @@ return expression_statement();
         consume(IDENTIFIER, "Expect superclass name.");
         superclass = std::make_unique<Variable>(previous());
       }
+      
+      //handle traits
+       std::vector<std::shared_ptr<Expr>> traits;
+      if(match({WITH})){
+          
+          do {
+             consume(IDENTIFIER, "Expect trait name.");
+                traits.push_back(
+                std::make_shared<Variable>(previous())
+                );
+                 } while (match({COMMA}));
+          
+      }
       ///
          consume(LEFT_BRACE, "Expect '{' before class body.");
 
          std::vector<std::shared_ptr<Function>> methods;
          std::vector<std::unique_ptr<Function>> staticMethods;
+        
 
          while (!check(RIGHT_BRACE) && !is_at_end()) {
 
@@ -469,6 +507,7 @@ return expression_statement();
              name,
              std::move(methods),
              std::move(staticMethods),
+             std::move(traits),
              std::move(superclass)
          );
 

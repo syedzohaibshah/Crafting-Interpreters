@@ -16,6 +16,7 @@ class Resolver : public ExprVisitor,public StmtVisitor{
     ClassType currentClass = ClassType::NONE;
 
     FunctionType currentFunction = FunctionType::NONE;
+    TraitType currentTrait = TraitType::NONE;
 std::shared_ptr<Interpreter> interpreter;
 
 
@@ -50,7 +51,7 @@ std::shared_ptr<Interpreter> interpreter;
   void  visitWhileStmt(const While & stmt) override;
  void visitBreakStmt(const Break& stmt)override;
  void visitClassStmt(const Class &stmt) override;
-
+ void visitTraitStmt(const Trait &stmt) override;
 
 VisitorReturn visitVariableExpr(const Variable &expr) override;
 VisitorReturn visitAssignExpr(const Assign & expr)override;

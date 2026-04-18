@@ -15,6 +15,7 @@
 #include "LoxInstance.h"
 #include "Object.h"
 #include "TokenType.h"
+#include "LoxTrait.h"
 
 void Interpreter::check_numbered_operand(const Token& op, const Object& left, const Object& right) {
     if (std::holds_alternative<double>(right) && std::holds_alternative<double>(left)) return;
@@ -429,6 +430,7 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
 
      void Interpreter:: visitClassStmt(const Class & stmt) {
+         
          environment->define(stmt.name.lexeme, std::monostate{});
 
         //first handle inhertance(superclass)
@@ -455,9 +457,34 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
 
 
          // environment->define(stmt.name.lexeme, std::monostate{});
-
+         
+         //traits
+         std::vector<std::shared_ptr<LoxTrait>>traits;
+         for (auto &traitExpr : stmt.traits) {
+             auto value = evaluate(*traitExpr);
+         
+             if (!std::holds_alternative<std::shared_ptr<LoxTrait>>(value)) {
+                 throw RuntimeError(stmt.name,"Can only use traits in 'with'.");
+             }
+         
+             traits.push_back(std::get<std::shared_ptr<LoxTrait>>(value));
+         }
+         
            // instance methods
           std::unordered_map<std::string,std::shared_ptr<LoxFunction>> methods;
+          
+          for (auto &trait : traits) {
+              for (auto &[name, method] : trait->methods) {
+          
+                  if (methods.count(name)) {
+                      throw RuntimeError(stmt.name,
+                          "Trait method conflict: " + name);
+                  }
+          
+                  methods[name] = method;
+              }
+          }
+          
 
           for(auto & method:stmt.methods){
 
@@ -473,6 +500,9 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
                   std::make_shared<LoxFunction>(method.get(), environment, false);
           }
 
+       
+
+          
           // create metaclass (holds static methods)
           auto metaclass = std::make_shared<LoxClass>(
               stmt.name.lexeme + " metaclass",
@@ -497,6 +527,24 @@ void Interpreter:: visitWhileStmt(const While & stmt) {
           }
           environment->assign(stmt.name, klass);
 
+        }
+        
+        
+        void  Interpreter::  visitTraitStmt(const Trait &stmt){
+            environment->define(stmt.name.lexeme, std::monostate{});
+            
+            std::unordered_map<std::string,std::shared_ptr<LoxFunction>> methods;
+
+            for(auto & method:stmt.methods){
+  
+                 auto function  = std::make_shared<LoxFunction>(method.get(),environment,false);
+                 methods[method->name.lexeme]=function;
+            }
+            
+             auto trait = std::make_shared<LoxTrait>(methods);
+             
+             environment->assign(stmt.name, trait);
+         
         }
 
 

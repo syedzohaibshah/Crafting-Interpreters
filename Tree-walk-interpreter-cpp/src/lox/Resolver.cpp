@@ -16,11 +16,11 @@ void Resolver:: visitBlockStmt(const Block &stmt) {
 void  Resolver :: resolve(const std::vector<std::unique_ptr<Stmt>>& statements) {
 
   for (auto  & statement : statements) {
-      
+
     resolve(*statement);
-    
+
   }
-  
+
 }
 
 
@@ -191,19 +191,19 @@ void Resolver:: visitWhileStmt(const While & stmt) {
 
         declare(stmt.name);
         define(stmt.name);
-        
+
         //handle this case -> class Oops < Oops {}
         if (stmt.superclass != nullptr &&
             stmt.name.lexeme==stmt.superclass->name.lexeme) {
           Lox::error(stmt.superclass->name,
               "A class can't inherit from itself.");
         }
-        
+
         if (stmt.superclass != nullptr) {
             currentClass = ClassType::SUBCLASS;
            resolve(*stmt.superclass);
          }
-         
+
         if (stmt.superclass != nullptr) {
             beginScope();
             scopes.back()["super"]= true;
@@ -226,6 +226,11 @@ void Resolver:: visitWhileStmt(const While & stmt) {
 
               resolveFunction(*method,FunctionType::FUNCTION);
             }
+            
+            //resolving trait expr
+            for (auto &traitExpr : stmt.traits) {
+                resolve(*traitExpr);
+            }
 
 
           endScope();
@@ -233,6 +238,32 @@ void Resolver:: visitWhileStmt(const While & stmt) {
     currentClass = enclosingClass;
 
       }
+
+      //Trait resolution
+       void  Resolver:: visitTraitStmt(const Trait &stmt) {
+
+           TraitType enclosingTrait = currentTrait;
+           currentTrait = TraitType::TRAIT;
+
+           declare(stmt.name);
+           define(stmt.name);
+           ClassType enclosingClass = currentClass;
+            currentClass = ClassType::CLASS;  //allow us tu this in trait
+
+             beginScope();
+             scopes.back()["this"]=true;
+
+             for (auto & method : stmt.methods) {
+                 FunctionType declaration = FunctionType::METHOD;
+                 if (method->name.lexeme == "init") {
+                     Lox::error(method->name, "Traits cannot define 'init'.");
+                 }
+                 resolveFunction(*method, declaration);
+               }
+               endScope();
+               currentTrait = enclosingTrait;
+                 currentClass = enclosingClass;
+       }
 
      VisitorReturn Resolver:: visitBinaryExpr(const Binary& expr) {
        resolve(*expr.left);
@@ -310,13 +341,15 @@ VisitorReturn Resolver:: visitThisExpr(const This &expr) {
          return std::monostate{};
       }
 
-      
-   
+
+
 VisitorReturn Resolver:: visitSuperExpr(const Super&  expr) {
-    
+
     if (currentClass == ClassType::NONE) {
       Lox::error(expr.keyword,
           "Can't use 'super' outside of a class.");
+    }else if (currentTrait == TraitType::TRAIT) {
+         Lox::error(expr.keyword, "Cannot use 'super' inside a trait.");
     } else if (currentClass != ClassType::SUBCLASS) {
       Lox::error(expr.keyword,
           "Can't use 'super' in a class with no superclass.");

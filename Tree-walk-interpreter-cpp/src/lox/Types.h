@@ -16,3 +16,9 @@ enum ClassType {
  CLASS,
  SUBCLASS
 };
+
+enum class TraitType {
+    NONE,
+    TRAIT
+};
+

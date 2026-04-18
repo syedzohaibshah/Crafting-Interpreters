@@ -14,6 +14,7 @@ class Break;
 class Function;
 class Return;
 class Class;
+class Trait;
 
 class StmtVisitor{
     public:
@@ -27,6 +28,7 @@ class StmtVisitor{
    virtual void visitFunctionStmt(const Function & stmt)=0;
    virtual void visitReturnStmt(const Return & stmt)=0;
    virtual void visitClassStmt(const Class & stmt)=0;
+   virtual void visitTraitStmt(const Trait & stmt)=0;
 
 
    virtual ~StmtVisitor()=default;
@@ -205,13 +207,14 @@ public:
 class Class :public Stmt{
 public:
      Token name;
+     std::vector<std::shared_ptr<Expr>> traits;
      std::vector< std::shared_ptr<Function>>methods;
      std::vector<std::unique_ptr<Function>> staticMethods;
      std::unique_ptr<Variable> superclass;
 
     Class(Token name,std::vector<std::shared_ptr<Function>>methods,
-        std::vector<std::unique_ptr<Function>> staticMethods,std::unique_ptr<Variable> superclass)
-    :name(name),methods(std::move(methods)),staticMethods(std::move(staticMethods)),
+        std::vector<std::unique_ptr<Function>> staticMethods,std::vector<std::shared_ptr<Expr>> traits,std::unique_ptr<Variable> superclass)
+    :name(name),methods(std::move(methods)),staticMethods(std::move(staticMethods)),traits(std::move(traits)),
         superclass(std::move(superclass)){}
 
 
@@ -219,5 +222,18 @@ public:
         return visitor.visitClassStmt(*this);
       }
 
+
+};
+
+
+class Trait : public Stmt {
+public:
+    Token name;
+    std::vector<std::shared_ptr<Function>> methods;
+    Trait( Token name,std::vector<std::shared_ptr<Function>> methods):name(name),methods(methods){}
+    
+    void  accept(StmtVisitor & visitor) const override {
+        return visitor.visitTraitStmt(*this);
+      }
 
 };

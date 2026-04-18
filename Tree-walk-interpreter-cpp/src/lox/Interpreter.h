@@ -65,6 +65,7 @@ VisitorReturn visitSuperExpr(const Super & expr) override;
     void visitFunctionStmt(const Function& stmt)override;
      void visitReturnStmt(const Return & stmt) override;
      void visitClassStmt(const Class & stmt) override;
+     void visitTraitStmt(const Trait &stmt) override;
 
 
     void executeBlock( const std::vector<std::unique_ptr<Stmt>>&  statements,
