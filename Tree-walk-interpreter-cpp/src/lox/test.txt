@@ -1,16 +1,9 @@
-trait Counter {
-  inc() {
-    this.count = this.count + 1;
-  }
+fun fib(n) {
+  if (n < 2) return n;
+  return fib(n - 1) + fib(n - 2); 
 }
 
-class C with Counter {
-  init() {
-    this.count = 0;
-  }
-}
-
-var c = C();
-c.inc();
-c.inc();
-print c.count; // 2
+var before = clock();
+print fib(30);
+var after = clock();
+print after - before;
