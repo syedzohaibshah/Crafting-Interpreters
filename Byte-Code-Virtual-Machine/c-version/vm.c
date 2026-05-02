@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "vm.h"
 #include "debug.h"
+#include "compiler.h"
 
 
 VM vm;
@@ -68,12 +69,11 @@ static InterpretResult run() {
 #undef BINARY_OP
 }
 
-InterpretResult interpret(Chunk* chunk) {
-    
-  vm.chunk = chunk;
-  vm.ip = vm.chunk->code;
+InterpretResult interpret(const char* source) {
+ compile(source);
   
-  return run();
+  return INTERPRET_OK;
+  
 }
 
 

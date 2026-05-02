@@ -1,8 +1,8 @@
-// vm.cpp (updated)
 #include "vm.h"
 #include "debug.h"
 #include <iostream>
 #include <cstddef>
+#include "compile.h"
 
 constexpr size_t STACK_MAX = 256;
 
@@ -24,11 +24,13 @@ Value VM::pop() {
   return value;
 }
 
-InterpretResult VM::interpret(const Chunk& chunk_) {
-  chunk = &chunk_;
-  ip = chunk->code.data();
-  return run();
+InterpretResult VM::interpret(const std::string &source) {
+  Compiler compiler(source);
+  compiler.compile(source);
+  return InterpretResult::INTERPRET_OK;
+
 }
+
 
 InterpretResult VM::run() {
 #define READ_BYTE() (*ip++)
@@ -77,7 +79,7 @@ InterpretResult VM::run() {
       case static_cast<uint8_t>(OpCode::OP_RETURN): {
         printValue(pop());
         std::cout << "\n";
-        return InterpretResult::OK;
+        return InterpretResult::INTERPRET_OK;
       }
     }
   }

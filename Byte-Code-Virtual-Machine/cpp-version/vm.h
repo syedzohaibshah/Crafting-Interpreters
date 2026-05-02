@@ -7,9 +7,9 @@
 #include "chunk.h"
 
 enum class InterpretResult {
-  OK,
-  COMPILE_ERROR,
-  RUNTIME_ERROR
+  INTERPRET_OK,
+  INTERPRET_COMPILE_ERROR,
+  INTERPRET_RUNTIME_ERROR
 };
 
 class VM {
@@ -17,7 +17,8 @@ public:
   VM();
   ~VM() = default;
 
-  InterpretResult interpret(const Chunk& chunk);
+  
+InterpretResult interpret(const std::string &source);
 
 private:
   InterpretResult run();
