@@ -2,7 +2,7 @@
 #include "debug.h"
 #include <iostream>
 #include <cstddef>
-#include "compile.h"
+
 
 constexpr size_t STACK_MAX = 256;
 
@@ -25,9 +25,20 @@ Value VM::pop() {
 }
 
 InterpretResult VM::interpret(const std::string &source) {
-  Compiler compiler(source);
-  compiler.compile(source);
-  return InterpretResult::INTERPRET_OK;
+
+    Compiler compiler(source);
+  
+    
+   auto chunk=std::make_unique<Chunk>();
+   if (!compiler.compile(chunk.get())) {
+     return InterpretResult::INTERPRET_COMPILE_ERROR;
+   }
+   this->chunk = std::move(chunk);
+   this->ip = this->chunk->code.data(); //code is vector 
+
+   InterpretResult result = run();
+
+  return result;
 
 }
 

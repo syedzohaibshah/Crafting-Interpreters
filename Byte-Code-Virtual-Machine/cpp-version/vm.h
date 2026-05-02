@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include "chunk.h"
+#include "compile.h"
 
 enum class InterpretResult {
   INTERPRET_OK,
@@ -26,8 +27,8 @@ private:
   Value pop();
   void resetStack();
 
-  const Chunk* chunk = nullptr;
-  const uint8_t* ip = nullptr;
+  std::unique_ptr<Chunk> chunk;
+   uint8_t* ip = nullptr;
   std::vector<Value> stack;
 };
 
