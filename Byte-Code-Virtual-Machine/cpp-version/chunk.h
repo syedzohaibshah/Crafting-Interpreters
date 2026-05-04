@@ -25,7 +25,7 @@ class Chunk{
    Chunk() = default;
   ~Chunk() = default;
 
-    void writeChunk(uint8_t byte, int line);
+  void writeChunk(uint8_t byte, int line);
   int addConstant(const Value& value);
   void writeConstant(const Value& value, int line);
  

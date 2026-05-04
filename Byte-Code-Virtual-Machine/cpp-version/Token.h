@@ -1,7 +1,7 @@
 #pragma once
 #include<string>
 
-enum class TokenType  {
+enum class TokenType:int  {
   // Single-character tokens.
   TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
   TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
@@ -20,7 +20,7 @@ enum class TokenType  {
   TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
   TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
 
-  TOKEN_ERROR, TOKEN_EOF
+  TOKEN_ERROR, TOKEN_EOF,TOKEN_COUNT,
 };
 
 
