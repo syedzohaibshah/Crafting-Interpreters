@@ -9,7 +9,7 @@
 #include <iomanip>
 #include <string_view>
 #include<iostream>
-
+#include "debug.h"
 
 
 Chunk* compilingChunk;
@@ -88,6 +88,10 @@ void Compiler:: emitBytes(uint8_t byte1, uint8_t byte2) {
 }
  void Compiler::  endCompiler() {
   emitReturn();
+
+
+ 
+ 
 }
 
 void Compiler:: parsePrecedence(Precedence precedence) {
