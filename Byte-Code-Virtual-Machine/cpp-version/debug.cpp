@@ -5,8 +5,29 @@
 #include <iostream>
 #include <cstdio>
 
+
 void printValue(Value value) {
-  std::cout << value;
+         if (std::holds_alternative<bool>(value))
+             std::cout<<AS_BOOL(value) ? "true" : "false";
+         
+        else if (std::holds_alternative<std::nullptr_t>(value)) std::cout<<"nil"; 
+        else if (std::holds_alternative<double>(value))  std::cout<<AS_NUMBER(value); 
+
+}
+
+bool valuesEqual(Value a, Value b) {
+  if (a != b) return false;
+  if (std::holds_alternative<bool>(a))
+    return AS_BOOL(a) == AS_BOOL(b);
+    
+  else if (std::holds_alternative<std::nullptr_t>(a))   
+      return true;
+  
+  else if (std::holds_alternative<double>(a)) 
+    return AS_NUMBER(a) == AS_NUMBER(b);
+  
+  else   return false; // Unreachable.
+  
 }
 
 void disassembleChunk(const Chunk& chunk, const char* name) {
@@ -75,6 +96,24 @@ int disassembleInstruction(const Chunk& chunk, int offset) {
       
     case static_cast<uint8_t>(OpCode::OP_DIVIDE):
       return simpleInstruction("OP_DIVIDE", offset);
+      
+      case static_cast<uint8_t>(OpCode::OP_NIL):
+        return simpleInstruction("OP_NIL", offset);
+        
+      case static_cast<uint8_t>(OpCode::OP_TRUE):
+        return simpleInstruction("OP_TRUE", offset);
+        
+      case static_cast<uint8_t>(OpCode::OP_FALSE):
+        return simpleInstruction("OP_FALSE", offset);
+
+        case static_cast<uint8_t>(OpCode::OP_NOT):
+          return simpleInstruction("OP_NOT", offset);
+          case static_cast<uint8_t>(OpCode::OP_EQUAL):
+            return simpleInstruction("OP_EQUAL", offset);
+          case static_cast<uint8_t>(OpCode::OP_GREATER):
+            return simpleInstruction("OP_GREATER", offset);
+          case static_cast<uint8_t>(OpCode::OP_LESS):
+            return simpleInstruction("OP_LESS", offset);
       
     default:
       std::printf("Unknown opcode %d\n", instruction);

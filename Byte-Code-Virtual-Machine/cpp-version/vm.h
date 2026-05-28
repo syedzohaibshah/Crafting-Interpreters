@@ -4,13 +4,13 @@
 
 #include <vector>
 #include <memory>
-#include "chunk.h"
+
 #include "compile.h"
 
 enum class InterpretResult {
   INTERPRET_OK,
   INTERPRET_COMPILE_ERROR,
-  INTERPRET_RUNTIME_ERROR
+  INTERPRET_RUNTIME_ERROR,
 };
 
 class VM {
@@ -26,7 +26,10 @@ private:
   void push(Value value);
   Value pop();
   void resetStack();
-
+  
+  Value peek(int distance);
+  bool  isFalsey(Value value);
+void  runtimeError(const char* format, ...) ;
   std::unique_ptr<Chunk> chunk;
    uint8_t* ip = nullptr;
   std::vector<Value> stack;

@@ -11,12 +11,15 @@
 #include<iostream>
 #include "debug.h"
 
+#ifdef DEBUG_PRINT_CODE
+#include "debug.h"
+#endif
 
 Chunk* compilingChunk;
 
 
 Compiler::Compiler(const std::string& src) : source(src),scanner(src) {
-    void initRules();
+    initRules();
 }
 
 
@@ -88,7 +91,11 @@ void Compiler:: emitBytes(uint8_t byte1, uint8_t byte2) {
 }
  void Compiler::  endCompiler() {
   emitReturn();
-
+  #ifdef DEBUG_PRINT_CODE
+    if (!parser.hadError) {
+      disassembleChunk(*currentChunk(), "code");
+    }
+  #endif
 
  
  
@@ -124,6 +131,7 @@ void Compiler::expression() {
   // What goes here?
    parsePrecedence(PREC_ASSIGNMENT);
 }
+
 void Compiler:: unary() {
   TokenType operatorType = parser.previous.type;
 
@@ -132,6 +140,7 @@ void Compiler:: unary() {
 parsePrecedence(PREC_UNARY);
   // Emit the operator instruction.
   switch (operatorType) {
+    case TokenType::TOKEN_BANG: emitByte(OP_NOT); break;
     case TokenType::TOKEN_MINUS: emitByte(OP_NEGATE); break;
     default: return; // Unreachable.
   }
@@ -161,7 +170,8 @@ void Compiler:: grouping() {
     std::string_view val(source.data() + parser.previous.start, parser.previous.length);
     std::string strValue=static_cast<std::string>(val);
     double value = stod(strValue);
-    emitConstant(value);
+    //emitConstant(value);
+    emitConstant(NUMBER_VAL(value));
   
 }
 
@@ -175,10 +185,24 @@ void Compiler:: grouping() {
     case TokenType::TOKEN_MINUS:         emitByte(OP_SUBTRACT); break;
     case TokenType::TOKEN_STAR:          emitByte(OP_MULTIPLY); break;
     case TokenType::TOKEN_SLASH:         emitByte(OP_DIVIDE); break;
+    case TokenType::TOKEN_BANG_EQUAL:    emitBytes(OP_EQUAL, OP_NOT); break;
+    case TokenType::TOKEN_EQUAL_EQUAL:   emitByte(OP_EQUAL); break;
+    case TokenType::TOKEN_GREATER:       emitByte(OP_GREATER); break;
+    case TokenType::TOKEN_GREATER_EQUAL: emitBytes(OP_LESS, OP_NOT); break;
+    case TokenType::TOKEN_LESS:          emitByte(OP_LESS); break;
+    case TokenType::TOKEN_LESS_EQUAL:    emitBytes(OP_GREATER, OP_NOT); break;
     default: return; // Unreachable.
   }
 }
 
+ void Compiler:: literal() {
+  switch (parser.previous.type) {
+    case TokenType::TOKEN_FALSE: emitByte(OP_FALSE); break;
+    case TokenType::TOKEN_NIL: emitByte(OP_NIL); break;
+    case TokenType::TOKEN_TRUE: emitByte(OP_TRUE); break;
+    default: return; // Unreachable.
+  }
+}
 
 bool Compiler::compile(Chunk* chunk) {
  compilingChunk = chunk;
@@ -207,31 +231,31 @@ void Compiler::initRules() {
   rules[static_cast<int>(TokenType::TOKEN_SEMICOLON)]     = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_SLASH)]         = {nullptr,     [this]() { this->binary();}, PREC_FACTOR};
   rules[static_cast<int>(TokenType::TOKEN_STAR)]          = {nullptr,     [this]() { this->binary();}, PREC_FACTOR};
-  rules[static_cast<int>(TokenType::TOKEN_BANG)]          = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_BANG_EQUAL)]    = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_BANG)]          = {[this](){this->unary();}, nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_BANG_EQUAL)]    = {nullptr,     [this](){this->binary();},   PREC_EQUALITY};//
   rules[static_cast<int>(TokenType::TOKEN_EQUAL)]         = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_EQUAL_EQUAL)]   = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_GREATER)]       = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_GREATER_EQUAL)] = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_LESS)]          = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_LESS_EQUAL)]    = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_EQUAL_EQUAL)]   = {nullptr,     [this](){this->binary();},   PREC_EQUALITY};//
+  rules[static_cast<int>(TokenType::TOKEN_GREATER)]       = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_GREATER_EQUAL)] = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_LESS)]          = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_LESS_EQUAL)]    = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
   rules[static_cast<int>(TokenType::TOKEN_IDENTIFIER)]    = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_STRING)]        = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_NUMBER)]        = {[this]() { this->number();},   nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_AND)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_CLASS)]         = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_ELSE)]          = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_FALSE)]         = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_ELSE)]          = {nullptr,     nullptr,   PREC_NONE}; ///
+  rules[static_cast<int>(TokenType::TOKEN_FALSE)]         = {[this](){this->literal();},  nullptr,   PREC_NONE};///
   rules[static_cast<int>(TokenType::TOKEN_FOR)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_FUN)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_IF)]            = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_NIL)]           = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_NIL)]           = {[this](){this->literal();},  nullptr,   PREC_NONE};//
   rules[static_cast<int>(TokenType::TOKEN_OR)]            = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_PRINT)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_RETURN)]        = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_SUPER)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_THIS)]          = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_TRUE)]          = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_TRUE)]          = {[this](){this->literal();}, nullptr,   PREC_NONE};//
   rules[static_cast<int>(TokenType::TOKEN_VAR)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_WHILE)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_ERROR)]         = {nullptr,     nullptr,   PREC_NONE};
