@@ -19,7 +19,7 @@ Chunk* compilingChunk;
 
 
 Compiler::Compiler(const std::string& src) : source(src),scanner(src) {
-    initRules();
+     initRules();
 }
 
 
@@ -59,14 +59,14 @@ void Compiler:: error(const std::string & message) {
 
 
  void Compiler::advance() {
-     
+
   parser.previous = parser.current;
 
   for (;;) {
     parser.current = scanner.scanToken();
     if (parser.current.type != TokenType::TOKEN_ERROR) break;
 errorAtCurrent("Unexpected character");
-   
+
   }
 }
 
@@ -97,22 +97,22 @@ void Compiler:: emitBytes(uint8_t byte1, uint8_t byte2) {
     }
   #endif
 
- 
- 
+
+
 }
 
 void Compiler:: parsePrecedence(Precedence precedence) {
 
-    advance();// we are now on the second token 
-    ParseFn prefixRule = getRule(parser.previous.type)->prefix;    /*getRule will Return pointer to the token type function  
-        which is actalyy type of ParserRule whic is actually struct in that struct we have three column( types 
+    advance();// we are now on the second token
+    ParseFn prefixRule = getRule(parser.previous.type)->prefix;    /*getRule will Return pointer to the token type function
+        which is actalyy type of ParserRule whic is actually struct in that struct we have three column( types
         of functions prefix and infix and also precedence of these operations)   */
-    
-        if (prefixRule == nullptr) {                                         
+
+        if (prefixRule == nullptr) {
       error("Expect expression.");
       return;
     }
-  
+
     prefixRule(); //it will call that function that we just get from table
 
     while (precedence <= getRule(parser.current.type)->precedence) {
@@ -120,7 +120,7 @@ void Compiler:: parsePrecedence(Precedence precedence) {
       ParseFn infixRule = getRule(parser.previous.type)->infix;
       infixRule();
     }
-  
+
 }
 
  ParseRule* Compiler::getRule(TokenType type) {
@@ -172,7 +172,7 @@ void Compiler:: grouping() {
     double value = stod(strValue);
     //emitConstant(value);
     emitConstant(NUMBER_VAL(value));
-  
+
 }
 
  void Compiler:: binary() {
@@ -204,6 +204,11 @@ void Compiler:: grouping() {
   }
 }
 
+ void Compiler:: string() {
+  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
+                                  parser.previous.length - 2)));
+}
+
 bool Compiler::compile(Chunk* chunk) {
  compilingChunk = chunk;
   parser.hadError = false;
@@ -213,16 +218,16 @@ bool Compiler::compile(Chunk* chunk) {
   consume(TokenType::TOKEN_EOF, "Expect end of expression.");
  endCompiler();
    return !parser.hadError;
- 
+
 }
 
 
 
 void Compiler::initRules() {
-    
+
   rules[static_cast<int>(TokenType::TOKEN_LEFT_PAREN)] = {[this]() { this->grouping();}, nullptr, PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_RIGHT_PAREN)]   = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_LEFT_BRACE)]   = {nullptr,     nullptr,   PREC_NONE}; 
+  rules[static_cast<int>(TokenType::TOKEN_LEFT_BRACE)]   = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_RIGHT_BRACE)]   = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_COMMA)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_DOT)]           = {nullptr,     nullptr,   PREC_NONE};
@@ -240,7 +245,7 @@ void Compiler::initRules() {
   rules[static_cast<int>(TokenType::TOKEN_LESS)]          = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
   rules[static_cast<int>(TokenType::TOKEN_LESS_EQUAL)]    = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
   rules[static_cast<int>(TokenType::TOKEN_IDENTIFIER)]    = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_STRING)]        = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_STRING)]        = {[this](){this->string();},  nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_NUMBER)]        = {[this]() { this->number();},   nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_AND)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_CLASS)]         = {nullptr,     nullptr,   PREC_NONE};
@@ -266,14 +271,14 @@ void Compiler::initRules() {
 
 
 
-// int line = -1;              
+// int line = -1;
 //   for (;;) {
 //     Token token = scanner.scanToken();
 //     if (token.line != line) {
 //       std::cout<<std::setw(4)<<token.line<<" ";
 //       line = token.line;
 //     } else {
-        
+
 //       std::cout << "   | ";
 //     }
 //     std::string_view lexeme(source.data() + token.start, token.length);

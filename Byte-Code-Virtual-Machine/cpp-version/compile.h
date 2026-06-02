@@ -66,6 +66,8 @@ class Compiler {
       void parsePrecedence(Precedence precedence);
       void binary();
        void  literal() ;
+       
+       void string(); 
        ParseRule* getRule(TokenType type) ;
 
        ParseRule rules[static_cast<int>(TokenType::TOKEN_COUNT)];

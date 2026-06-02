@@ -5,19 +5,27 @@
 #include <variant>
 #include<vector>
 
+typedef struct Obj Obj;
+typedef struct ObjString ObjString;
+
+
 #define BOOL_VAL(value)   (Value(value))
 #define NIL_VAL           (Value(nullptr))
 #define NUMBER_VAL(value) (Value(value))
+#define OBJ_VAL(object)   (Value(value))
+
 
 #define AS_BOOL(value)    (std::get<bool>(value))
 #define AS_NUMBER(value)  (std::get<double>(value))
+#define AS_OBJ(value)     (std::get<Obj*>(value))
 
 #define IS_BOOL(value)    (std::holds_alternative<bool>(value))
 #define IS_NIL(value)     (std::holds_alternative<std::nullptr_t>(value))
 #define IS_NUMBER(value)  (std::holds_alternative<double>(value))
+#define IS_OBJ(value)     (std::holds_alternative<Obj*>(value))
 
 
-using Value = std::variant<std::nullptr_t, bool, double>;  // nil, bool, number
+using Value = std::variant<std::nullptr_t, bool, double,Obj* >;  // nil, bool, number
 
 
 //using Value = double;
