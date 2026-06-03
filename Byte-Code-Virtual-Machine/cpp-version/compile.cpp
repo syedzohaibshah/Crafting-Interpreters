@@ -205,7 +205,7 @@ void Compiler:: grouping() {
 }
 
  void Compiler:: string() {
-  emitConstant(OBJ_VAL(copyString(parser.previous.start + 1,
+  emitConstant(OBJ_VAL(copyString(source.data() + parser.previous.start + 1,
                                   parser.previous.length - 2)));
 }
 

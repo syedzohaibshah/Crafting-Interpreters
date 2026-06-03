@@ -1,10 +1,11 @@
 // debug.cpp (updated)
 #include "debug.h"
 #include "chunk.h"
-
+#include "object.h"
 #include <iostream>
 #include <cstdio>
-
+#include <string.h>
+#include "object.h"
 
 void printValue(Value value) {
          if (std::holds_alternative<bool>(value))
@@ -12,6 +13,7 @@ void printValue(Value value) {
          
         else if (std::holds_alternative<std::nullptr_t>(value)) std::cout<<"nil"; 
         else if (std::holds_alternative<double>(value))  std::cout<<AS_NUMBER(value); 
+        else if (std::holds_alternative<Obj*>(value)) printObject(value);
 
 }
 
@@ -25,6 +27,14 @@ bool valuesEqual(Value a, Value b) {
   
   else if (std::holds_alternative<double>(a)) 
     return AS_NUMBER(a) == AS_NUMBER(b);
+    
+  else if(std::holds_alternative<Obj*>(a)) {
+    ObjString* aString = AS_STRING(a);
+    ObjString* bString = AS_STRING(b);
+    return aString->length == bString->length &&
+        memcmp(aString->chars, bString->chars,
+               aString->length) == 0;
+  }
   
   else   return false; // Unreachable.
   

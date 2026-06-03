@@ -16,9 +16,10 @@ enum class InterpretResult {
 class VM {
 public:
   VM();
-  ~VM() = default;
+  ~VM();
 
-  
+  Obj* objects;
+
 InterpretResult interpret(const std::string &source);
 
 private:
@@ -29,10 +30,16 @@ private:
   
   Value peek(int distance);
   bool  isFalsey(Value value);
+  void  concatenate();
 void  runtimeError(const char* format, ...) ;
+
+  void freeObjects();
+
   std::unique_ptr<Chunk> chunk;
    uint8_t* ip = nullptr;
   std::vector<Value> stack;
 };
 
+
+extern VM vm;
 #endif

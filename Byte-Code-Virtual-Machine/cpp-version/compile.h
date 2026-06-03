@@ -6,7 +6,7 @@
 #include"chunk.h"
 #include "Token.h"
 #include "scanner.h"
-
+#include "object.h"
 
 typedef struct {
   Token current;

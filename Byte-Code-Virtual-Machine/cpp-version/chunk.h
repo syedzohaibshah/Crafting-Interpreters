@@ -2,6 +2,7 @@
 #define clox_chunk_h
 
 #include "common.h"
+#include "memory.h"
 #include <variant>
 #include<vector>
 
@@ -9,10 +10,19 @@ typedef struct Obj Obj;
 typedef struct ObjString ObjString;
 
 
+#define ALLOCATE(type, count) \
+    (type*)reallocate(NULL, 0, sizeof(type) * (count))
+
+#define FREE(type, pointer) \
+    reallocate(pointer, sizeof(type), 0)
+
+#define FREE_ARRAY(type, pointer, count) \
+    reallocate(pointer, sizeof(type) * (count), 0)
+
 #define BOOL_VAL(value)   (Value(value))
 #define NIL_VAL           (Value(nullptr))
 #define NUMBER_VAL(value) (Value(value))
-#define OBJ_VAL(object)   (Value(value))
+#define OBJ_VAL(object)   (Value(reinterpret_cast<Obj*>(object)))
 
 
 #define AS_BOOL(value)    (std::get<bool>(value))

@@ -5,11 +5,15 @@
 #include <stdexcept>
 #include <stdarg.h>
 #include "chunk.h"
+#include <string.h>
+#include "object.h"
+
 
 constexpr size_t STACK_MAX = 256;
 
 VM::VM() {
   stack.reserve(STACK_MAX);
+    objects = nullptr;
 }
 
 void VM::resetStack() {
@@ -45,6 +49,20 @@ Value VM::peek(int distance) {
 
 bool VM:: isFalsey(Value value) {
   return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+ void  VM::concatenate() {
+  ObjString* b = AS_STRING(pop());
+  ObjString* a = AS_STRING(pop());
+
+  int length = a->length + b->length;
+  char* chars = ALLOCATE(char, length + 1);
+  memcpy(chars, a->chars, a->length);
+  memcpy(chars + a->length, b->chars, b->length);
+  chars[length] = '\0';
+
+  ObjString* result = takeString(chars, length);
+  push(OBJ_VAL(result));
 }
 
 InterpretResult VM::interpret(const std::string &source) {
@@ -106,8 +124,20 @@ InterpretResult VM::run() {
       }
     push(NUMBER_VAL(-AS_NUMBER(pop())));
         break;
-      case static_cast<uint8_t>(OpCode::OP_ADD):
-       BINARY_OP(NUMBER_VAL, +); break;
+      case static_cast<uint8_t>(OpCode::OP_ADD): {
+        if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+          concatenate();
+        } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+          double b = AS_NUMBER(pop());
+          double a = AS_NUMBER(pop());
+          push(NUMBER_VAL(a + b));
+        } else {
+          runtimeError(
+              "Operands must be two numbers or two strings.");
+          return InterpretResult::INTERPRET_RUNTIME_ERROR;
+        }
+        break;
+      } 
 
       case static_cast<uint8_t>(OpCode::OP_SUBTRACT):
         BINARY_OP(NUMBER_VAL, -); break;
@@ -133,6 +163,7 @@ InterpretResult VM::run() {
         }
         case static_cast<uint8_t>(OpCode::OP_GREATER):  BINARY_OP(BOOL_VAL, >); break;
         case static_cast<uint8_t>(OpCode::OP_LESS):     BINARY_OP(BOOL_VAL, <); break;
+    
 
 
       case static_cast<uint8_t>(OpCode::OP_RETURN): {
@@ -148,3 +179,29 @@ InterpretResult VM::run() {
 #undef READ_CONSTANT
 #undef BINARY_OP
 }
+//freeing memory
+static void freeObject(Obj* object) {
+  switch (object->type) {
+    case OBJ_STRING: {
+      ObjString* string = (ObjString*)object;
+      // Characters are stored inline, so only free the ObjString itself
+      FREE(ObjString, object);
+      break;
+    }
+  }
+}
+
+void VM::freeObjects() {
+  Obj* object = objects;
+  while (object != NULL) {
+    Obj* next = object->next;
+    freeObject(object);
+    object = next;
+  }
+}
+
+VM::~VM(){
+  freeObjects();
+}
+
+VM vm;
