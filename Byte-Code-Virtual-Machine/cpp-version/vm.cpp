@@ -14,6 +14,8 @@ constexpr size_t STACK_MAX = 256;
 VM::VM() {
   stack.reserve(STACK_MAX);
     objects = nullptr;
+    initTable(&strings);
+    initTable(&globals);
 }
 
 void VM::resetStack() {
@@ -87,6 +89,7 @@ InterpretResult VM::interpret(const std::string &source) {
 InterpretResult VM::run() {
 #define READ_BYTE() (*ip++)
 #define READ_CONSTANT() (chunk->constants[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op) \
     do { \
       if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
@@ -163,12 +166,34 @@ InterpretResult VM::run() {
         }
         case static_cast<uint8_t>(OpCode::OP_GREATER):  BINARY_OP(BOOL_VAL, >); break;
         case static_cast<uint8_t>(OpCode::OP_LESS):     BINARY_OP(BOOL_VAL, <); break;
+        case static_cast<uint8_t>(OpCode::OP_PRINT): {
+          printValue(pop());
+          std::cout<<"\n";
+          break;
+        }
+         case static_cast<uint8_t>(OpCode::OP_POP): pop(); break;
+         case static_cast<uint8_t>(OpCode::OP_DEFINE_GLOBAL): {
+           ObjString* name = READ_STRING();
+           tableSet(&vm.globals, name, peek(0));
+           pop();
+           break;
+         }
+         case static_cast<uint8_t>(OpCode::OP_GET_GLOBAL): {
+           ObjString* name = READ_STRING();
+           Value value;
+           if (!tableGet(&vm.globals, name, &value)) {
+             runtimeError("Undefined variable '%s'.", name->chars);
+             return InterpretResult::INTERPRET_RUNTIME_ERROR;
+           }
+           push(value);
+           break;
+         }
     
 
 
       case static_cast<uint8_t>(OpCode::OP_RETURN): {
-        printValue(pop());
-        std::cout << "\n";
+        // printValue(pop());
+        // std::cout << "\n";
         return InterpretResult::INTERPRET_OK;
       }
 
@@ -178,6 +203,7 @@ InterpretResult VM::run() {
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef BINARY_OP
+#undef READ_STRING
 }
 //freeing memory
 static void freeObject(Obj* object) {
@@ -202,6 +228,8 @@ void VM::freeObjects() {
 
 VM::~VM(){
   freeObjects();
+  freeTable(&vm.strings);
+    freeTable(&vm.globals);
 }
 
 VM vm;

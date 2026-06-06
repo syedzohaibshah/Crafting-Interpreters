@@ -208,19 +208,120 @@ void Compiler:: grouping() {
   emitConstant(OBJ_VAL(copyString(source.data() + parser.previous.start + 1,
                                   parser.previous.length - 2)));
 }
+ void Compiler:: variable() {
+  namedVariable(parser.previous);
+}
 
 bool Compiler::compile(Chunk* chunk) {
  compilingChunk = chunk;
   parser.hadError = false;
   parser.panicMode = false;
   advance();
-  expression();
-  consume(TokenType::TOKEN_EOF, "Expect end of expression.");
+  // expression();
+  // consume(TokenType::TOKEN_EOF, "Expect end of expression.");
+  while (!match(TokenType::TOKEN_EOF)) {
+    declaration();
+  }
  endCompiler();
    return !parser.hadError;
 
 }
+ void Compiler:: synchronize() {
+  parser.panicMode = false;
 
+  while (parser.current.type != TokenType::TOKEN_EOF) {
+    if (parser.previous.type == TokenType::TOKEN_SEMICOLON) return;
+    switch (parser.current.type) {
+      case TokenType::TOKEN_CLASS:
+      case TokenType::TOKEN_FUN:
+      case TokenType::TOKEN_VAR:
+      case TokenType::TOKEN_FOR:
+      case TokenType::TOKEN_IF:
+      case TokenType::TOKEN_WHILE:
+      case TokenType::TOKEN_PRINT:
+      case TokenType::TOKEN_RETURN:
+        return;
+
+      default:
+        ; // Do nothing.
+    }
+
+    advance();
+  }
+}
+
+ void Compiler:: declaration() {
+ //statement();
+  if (match(TokenType::TOKEN_VAR)) {
+    varDeclaration();
+  } else {
+    statement();
+  }
+  if (parser.panicMode) synchronize();
+}
+
+ void Compiler:: varDeclaration() {
+  uint8_t global = parseVariable("Expect variable name.");
+
+  if (match(TokenType::TOKEN_EQUAL)) {
+    expression();
+  } else {
+    emitByte(OP_NIL);
+  }
+  consume(TokenType::TOKEN_SEMICOLON,
+          "Expect ';' after variable declaration.");
+
+  defineVariable(global);
+}
+
+ uint8_t Compiler:: parseVariable(const char* errorMessage) {
+  consume(TokenType::TOKEN_IDENTIFIER, errorMessage);
+  return identifierConstant(&parser.previous);
+}
+uint8_t  Compiler::identifierConstant(Token* name) {
+  return makeConstant(OBJ_VAL(copyString(source.data()+name->start,
+                                         name->length)));
+}
+
+ void  Compiler:: defineVariable(uint8_t global) {
+  emitBytes(OP_DEFINE_GLOBAL, global);
+}
+
+
+void Compiler:: statement() {
+  if (match(TokenType::TOKEN_PRINT)) {
+    printStatement();
+  }else {
+      expressionStatement();
+  }
+}
+void Compiler:: expressionStatement() {
+  expression();
+  consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after expression.");
+  emitByte(OP_POP);
+}
+
+ void Compiler:: namedVariable(Token name) {
+  uint8_t arg = identifierConstant(&name);
+  emitBytes(OP_GET_GLOBAL, arg);
+}
+
+
+
+ bool  Compiler:: match(TokenType type) {
+  if (!check(type)) return false;
+  advance();
+  return true;
+}
+
+ bool Compiler:: check(TokenType type) {
+  return parser.current.type == type;
+}
+ void Compiler:: printStatement() {
+  expression();
+  consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after value.");
+  emitByte(OP_PRINT);
+}
 
 
 void Compiler::initRules() {
@@ -244,7 +345,7 @@ void Compiler::initRules() {
   rules[static_cast<int>(TokenType::TOKEN_GREATER_EQUAL)] = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
   rules[static_cast<int>(TokenType::TOKEN_LESS)]          = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
   rules[static_cast<int>(TokenType::TOKEN_LESS_EQUAL)]    = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
-  rules[static_cast<int>(TokenType::TOKEN_IDENTIFIER)]    = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_IDENTIFIER)]    = {[this](){this->variable();},     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_STRING)]        = {[this](){this->string();},  nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_NUMBER)]        = {[this]() { this->number();},   nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_AND)]           = {nullptr,     nullptr,   PREC_NONE};

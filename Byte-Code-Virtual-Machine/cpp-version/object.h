@@ -25,6 +25,7 @@ struct Obj {
 struct ObjString {
   Obj obj;
   int length;
+  uint32_t hash;
   char chars[];  // Flexible array member - stores characters inline
 };
 
@@ -34,4 +35,5 @@ static inline bool isObjType(Value value, ObjType type) {
 ObjString* copyString(const char* chars, int length);
 void printObject(Value value);
 ObjString* takeString(char* chars, int length);
+
 #endif

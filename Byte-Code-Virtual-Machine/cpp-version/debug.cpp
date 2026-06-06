@@ -28,13 +28,8 @@ bool valuesEqual(Value a, Value b) {
   else if (std::holds_alternative<double>(a)) 
     return AS_NUMBER(a) == AS_NUMBER(b);
     
-  else if(std::holds_alternative<Obj*>(a)) {
-    ObjString* aString = AS_STRING(a);
-    ObjString* bString = AS_STRING(b);
-    return aString->length == bString->length &&
-        memcmp(aString->chars, bString->chars,
-               aString->length) == 0;
-  }
+  else if(std::holds_alternative<Obj*>(a)) 
+      return AS_OBJ(a) == AS_OBJ(b);
   
   else   return false; // Unreachable.
   
@@ -124,6 +119,16 @@ int disassembleInstruction(const Chunk& chunk, int offset) {
             return simpleInstruction("OP_GREATER", offset);
           case static_cast<uint8_t>(OpCode::OP_LESS):
             return simpleInstruction("OP_LESS", offset);
+            
+          case static_cast<uint8_t>(OpCode::OP_PRINT):
+              return simpleInstruction("OP_PRINT", offset);
+          case static_cast<uint8_t>(OpCode::OP_POP):
+                return simpleInstruction("OP_POP", offset);
+        case static_cast<uint8_t>(OpCode::OP_DEFINE_GLOBAL):
+                  return constantInstruction("OP_DEFINE_GLOBAL", chunk,
+                                             offset);
+        case static_cast<uint8_t>(OpCode::OP_GET_GLOBAL):
+                    return constantInstruction("OP_GET_GLOBAL", chunk, offset);
       
     default:
       std::printf("Unknown opcode %d\n", instruction);

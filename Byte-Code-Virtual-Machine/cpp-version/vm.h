@@ -1,7 +1,7 @@
 // vm.h
 #ifndef CLOX_VM_H
 #define CLOX_VM_H
-
+#include "table.h"
 #include <vector>
 #include <memory>
 
@@ -17,7 +17,7 @@ class VM {
 public:
   VM();
   ~VM();
-
+  Table strings;
   Obj* objects;
 
 InterpretResult interpret(const std::string &source);
@@ -38,6 +38,8 @@ void  runtimeError(const char* format, ...) ;
   std::unique_ptr<Chunk> chunk;
    uint8_t* ip = nullptr;
   std::vector<Value> stack;
+    Table globals;
+  
 };
 
 

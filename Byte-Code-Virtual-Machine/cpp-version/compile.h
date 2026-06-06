@@ -66,9 +66,21 @@ class Compiler {
       void parsePrecedence(Precedence precedence);
       void binary();
        void  literal() ;
-       
+        void statement();
+       void declaration();
+       bool match(TokenType type);
+        bool check(TokenType type) ;
+         void printStatement();
+         void expressionStatement();
+         void synchronize();
+       void varDeclaration();
+        uint8_t parseVariable(const char* errorMessage) ;
+        uint8_t identifierConstant(Token* name) ;
+        void  defineVariable(uint8_t global);
        void string(); 
        ParseRule* getRule(TokenType type) ;
+        void  namedVariable(Token name);
+         void variable() ;
 
        ParseRule rules[static_cast<int>(TokenType::TOKEN_COUNT)];
        void initRules();
