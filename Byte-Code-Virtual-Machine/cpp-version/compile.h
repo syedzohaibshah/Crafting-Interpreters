@@ -29,23 +29,33 @@ typedef enum {
   PREC_PRIMARY
 } Precedence;
 
- // typedef returnType(*functionPointer)(arguments);    
+ // typedef returnType(*functionPointer)(arguments);
 
-using ParseFn =std::function<void()>;  
- 
+using ParseFn =std::function<void()>(bool canAssign);
+
 
 
 typedef struct {
-  ParseFn prefix; 
+  ParseFn prefix;
   ParseFn infix;
   Precedence precedence;
 } ParseRule;
 
+typedef struct {
+  Token name;
+  int depth;
+} Local;
+
+typedef struct {
+  Local locals[UINT8_COUNT];
+  int localCount;
+  int scopeDepth;
+} _Compiler;
 
 class Compiler {
   std::string source;
   Parser parser;
-
+_Compiler* current = NULL;
   Scanner scanner;
    void advance();
     void  errorAtCurrent(const std::string &message);
@@ -58,14 +68,14 @@ class Compiler {
       void  emitBytes(uint8_t byte1, uint8_t byte2);
     void  emitByte(uint8_t byte);
     void expression();
-     void  number();
+     void  number(bool canAssign);
      void emitConstant(Value value);
       uint8_t  makeConstant(Value value);
-      void grouping();
-      void unary();
+      void grouping(bool canAssign);
+      void unary(bool canAssign);
       void parsePrecedence(Precedence precedence);
-      void binary();
-       void  literal() ;
+      void binary(bool canAssign);
+       void  literal(bool canAssign) ;
         void statement();
        void declaration();
        bool match(TokenType type);
@@ -77,17 +87,28 @@ class Compiler {
         uint8_t parseVariable(const char* errorMessage) ;
         uint8_t identifierConstant(Token* name) ;
         void  defineVariable(uint8_t global);
-       void string(); 
+       void string(bool canAssign);
        ParseRule* getRule(TokenType type) ;
-        void  namedVariable(Token name);
-         void variable() ;
-
+        void  namedVariable(Token name,bool canAssign);
+         void variable(bool canAssign) ;
+ void initCompiler(_Compiler* compiler);
        ParseRule rules[static_cast<int>(TokenType::TOKEN_COUNT)];
        void initRules();
+        void block();
+        void beginScope();
+         void endScope();
+         void declareVariable() ;
+          void addLocal(Token name);
+          bool identifiersEqual(Token* a, Token* b);
+           int resolveLocal(_Compiler* compiler, Token* name);
+           void markInitialized() ;
+           void ifStatement() ;
+           int emitJump(uint8_t instruction);
+            void   patchJump(int offset);
 public:
   Compiler(const std::string& src);
- 
-  
+
+
   bool compile(Chunk* chunk);
 
 };
