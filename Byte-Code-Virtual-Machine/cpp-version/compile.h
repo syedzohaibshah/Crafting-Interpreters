@@ -7,6 +7,7 @@
 #include "Token.h"
 #include "scanner.h"
 #include "object.h"
+#include "common.h"
 
 typedef struct {
   Token current;
@@ -31,7 +32,7 @@ typedef enum {
 
  // typedef returnType(*functionPointer)(arguments);
 
-using ParseFn =std::function<void()>(bool canAssign);
+using ParseFn = std::function<void(bool)>;
 
 
 
@@ -105,6 +106,11 @@ _Compiler* current = NULL;
            void ifStatement() ;
            int emitJump(uint8_t instruction);
             void   patchJump(int offset);
+             void and_(bool canAssign);
+              void or_(bool canAssign);
+               void whileStatement();
+                void emitLoop(int loopStart);
+                 void forStatement();
 public:
   Compiler(const std::string& src);
 

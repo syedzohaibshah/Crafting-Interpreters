@@ -219,6 +219,11 @@ InterpretResult VM::run() {
            vm.ip += offset;
            break;
          }
+         case static_cast<uint8_t>(OpCode::OP_LOOP): {
+            uint16_t offset = READ_SHORT();
+            vm.ip -= offset;
+            break;
+          }
 
       case static_cast<uint8_t>(OpCode::OP_RETURN): {
         // printValue(pop());

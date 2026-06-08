@@ -87,13 +87,13 @@ void Compiler:: emitByte(uint8_t byte) {
   emitByte(instruction);
   emitByte(0xff);
   emitByte(0xff);
-  return currentChunk()->count - 2;
+  return currentChunk()->code.size() - 2;
 }
 
 
  void   Compiler:: patchJump(int offset) {
   // -2 to adjust for the bytecode for the jump offset itself.
-  int jump = currentChunk()->count - offset - 2;
+  int jump = currentChunk()->code.size() - offset - 2;
 
   if (jump > UINT16_MAX) {
     error("Too much code to jump over.");
@@ -106,6 +106,16 @@ void Compiler:: emitBytes(uint8_t byte1, uint8_t byte2) {
   emitByte(byte1);
   emitByte(byte2);
 }
+ void Compiler:: emitLoop(int loopStart) {
+  emitByte(OP_LOOP);
+
+  int offset = currentChunk()->code.size() - loopStart + 2;
+  if (offset > UINT16_MAX) error("Loop body too large.");
+
+  emitByte((offset >> 8) & 0xff);
+  emitByte(offset & 0xff);
+}
+
  void Compiler:: emitReturn() {
   emitByte(OP_RETURN);
 }
@@ -318,7 +328,7 @@ uint8_t  Compiler::identifierConstant(Token* name) {
 
 bool Compiler:: identifiersEqual(Token* a, Token* b) {
   if (a->length != b->length) return false;
-  return memcmp(a->start, b->start, a->length) == 0;
+  return memcmp(source.data() + a->start, source.data() + b->start, a->length) == 0;
 }
 
  int Compiler:: resolveLocal(_Compiler* compiler, Token* name) {
@@ -409,6 +419,10 @@ void Compiler:: statement() {
     beginScope();
     block();
     endScope();
+  } else if (match(TokenType::TOKEN_WHILE)) {
+      whileStatement();
+  } else if (match(TokenType::TOKEN_FOR)) {
+    forStatement();
   }
   else {
       expressionStatement();
@@ -429,6 +443,92 @@ void Compiler:: ifStatement() {
 
    if (match(TokenType::TOKEN_ELSE)) statement();
      patchJump(elseJump);
+}
+
+ void Compiler:: and_(bool canAssign) {
+  int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+  emitByte(OP_POP);
+  parsePrecedence(PREC_AND);
+
+  patchJump(endJump);
+}
+
+ void  Compiler:: or_(bool canAssign) {
+  int elseJump = emitJump(OP_JUMP_IF_FALSE);
+  int endJump = emitJump(OP_JUMP);
+
+  patchJump(elseJump);
+  emitByte(OP_POP);
+
+  parsePrecedence(PREC_OR);
+  patchJump(endJump);
+}
+
+ void Compiler:: whileStatement() {
+      int loopStart = currentChunk()->code.size();
+  consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+  expression();
+  consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+  int exitJump = emitJump(OP_JUMP_IF_FALSE);
+  emitByte(OP_POP);
+  statement();
+    emitLoop(loopStart);
+
+  patchJump(exitJump);
+  emitByte(OP_POP);
+}
+
+ void Compiler::forStatement() {
+      beginScope();
+  consume(TokenType::TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+
+  //intializer
+  if (match(TokenType::TOKEN_SEMICOLON)) {
+    // No initializer.
+  } else if (match(TokenType::TOKEN_VAR)) {//var i=0;
+    varDeclaration();
+  } else { // i=0;
+    expressionStatement();
+  }
+
+  int loopStart = currentChunk()->code.size(); //remember loop start
+  
+  //condition 
+  int exitJump = -1;
+  if (!match(TokenType::TOKEN_SEMICOLON)) {
+    expression();
+    consume(TokenType::TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+    // Jump out of the loop if the condition is false.
+    exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP); // Condition.
+  }
+  
+  //increment
+  if (!match(TokenType::TOKEN_RIGHT_PAREN)) {
+    int bodyJump = emitJump(OP_JUMP);
+    int incrementStart = currentChunk()->code.size();
+    expression();
+    emitByte(OP_POP);
+    consume(TokenType::TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+    emitLoop(loopStart);
+    loopStart = incrementStart;
+    patchJump(bodyJump);
+  }
+  
+  //body
+  statement();
+  emitLoop(loopStart);
+  if (exitJump != -1) {
+    patchJump(exitJump);  //patch condition
+    emitByte(OP_POP); // Condition.
+  }
+
+  
+    endScope();
 }
 
 void Compiler:: expressionStatement() {
@@ -457,8 +557,6 @@ void Compiler:: expressionStatement() {
   } else {
      emitBytes(getOp, (uint8_t)arg);
   }
-
-  emitBytes(OP_GET_GLOBAL, arg);
 }
 
 
@@ -482,45 +580,45 @@ void Compiler:: expressionStatement() {
   compiler->localCount = 0;
   compiler->scopeDepth = 0;
   current = compiler;
-}
+} 
 void Compiler::initRules() {
 
-  rules[static_cast<int>(TokenType::TOKEN_LEFT_PAREN)] = {[this]() { this->grouping();}, nullptr, PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_LEFT_PAREN)] = {[this](bool canAssign) { this->grouping(canAssign);}, nullptr, PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_RIGHT_PAREN)]   = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_LEFT_BRACE)]   = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_RIGHT_BRACE)]   = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_COMMA)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_DOT)]           = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_MINUS)]         = {[this]() { this->unary();},[this]() { this->binary();}, PREC_TERM};
-  rules[static_cast<int>(TokenType::TOKEN_PLUS)]          = {nullptr,     [this]() { this->binary();}, PREC_TERM};
+  rules[static_cast<int>(TokenType::TOKEN_MINUS)]         = {[this](bool canAssign) { this->unary(canAssign);},[this](bool canAssign) { this->binary(canAssign);}, PREC_TERM};
+  rules[static_cast<int>(TokenType::TOKEN_PLUS)]          = {nullptr,     [this](bool canAssign) { this->binary(canAssign);}, PREC_TERM};
   rules[static_cast<int>(TokenType::TOKEN_SEMICOLON)]     = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_SLASH)]         = {nullptr,     [this]() { this->binary();}, PREC_FACTOR};
-  rules[static_cast<int>(TokenType::TOKEN_STAR)]          = {nullptr,     [this]() { this->binary();}, PREC_FACTOR};
-  rules[static_cast<int>(TokenType::TOKEN_BANG)]          = {[this](){this->unary();}, nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_BANG_EQUAL)]    = {nullptr,     [this](){this->binary();},   PREC_EQUALITY};//
+  rules[static_cast<int>(TokenType::TOKEN_SLASH)]         = {nullptr,     [this](bool canAssign) { this->binary(canAssign);}, PREC_FACTOR};
+  rules[static_cast<int>(TokenType::TOKEN_STAR)]          = {nullptr,     [this](bool canAssign) { this->binary(canAssign);}, PREC_FACTOR};
+  rules[static_cast<int>(TokenType::TOKEN_BANG)]          = {[this](bool canAssign){this->unary(canAssign);}, nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_BANG_EQUAL)]    = {nullptr,     [this](bool canAssign){this->binary(canAssign);},   PREC_EQUALITY};//
   rules[static_cast<int>(TokenType::TOKEN_EQUAL)]         = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_EQUAL_EQUAL)]   = {nullptr,     [this](){this->binary();},   PREC_EQUALITY};//
-  rules[static_cast<int>(TokenType::TOKEN_GREATER)]       = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
-  rules[static_cast<int>(TokenType::TOKEN_GREATER_EQUAL)] = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
-  rules[static_cast<int>(TokenType::TOKEN_LESS)]          = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
-  rules[static_cast<int>(TokenType::TOKEN_LESS_EQUAL)]    = {nullptr,     [this](){this->binary();},   PREC_COMPARISON};
-  rules[static_cast<int>(TokenType::TOKEN_IDENTIFIER)]    = {[this](){this->variable();},     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_STRING)]        = {[this](){this->string();},  nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_NUMBER)]        = {[this]() { this->number();},   nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_AND)]           = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_EQUAL_EQUAL)]   = {nullptr,     [this](bool canAssign){this->binary(canAssign);},   PREC_EQUALITY};//
+  rules[static_cast<int>(TokenType::TOKEN_GREATER)]       = {nullptr,     [this](bool canAssign){this->binary(canAssign);},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_GREATER_EQUAL)] = {nullptr,     [this](bool canAssign){this->binary(canAssign);},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_LESS)]          = {nullptr,     [this](bool canAssign){this->binary(canAssign);},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_LESS_EQUAL)]    = {nullptr,     [this](bool canAssign){this->binary(canAssign);},   PREC_COMPARISON};
+  rules[static_cast<int>(TokenType::TOKEN_IDENTIFIER)]    = {[this](bool canAssign){this->variable(canAssign);},     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_STRING)]        = {[this](bool canAssign){this->string(canAssign);},  nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_NUMBER)]        = {[this](bool canAssign) { this->number(canAssign);},   nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_AND)]           = {nullptr,     [this](bool canAssign){this->and_(canAssign);},   PREC_AND};
   rules[static_cast<int>(TokenType::TOKEN_CLASS)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_ELSE)]          = {nullptr,     nullptr,   PREC_NONE}; ///
-  rules[static_cast<int>(TokenType::TOKEN_FALSE)]         = {[this](){this->literal();},  nullptr,   PREC_NONE};///
+  rules[static_cast<int>(TokenType::TOKEN_FALSE)]         = {[this](bool canAssign){this->literal(canAssign);},  nullptr,   PREC_NONE};///
   rules[static_cast<int>(TokenType::TOKEN_FOR)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_FUN)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_IF)]            = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_NIL)]           = {[this](){this->literal();},  nullptr,   PREC_NONE};//
-  rules[static_cast<int>(TokenType::TOKEN_OR)]            = {nullptr,     nullptr,   PREC_NONE};
+  rules[static_cast<int>(TokenType::TOKEN_NIL)]           = {[this](bool canAssign){this->literal(canAssign);},  nullptr,   PREC_NONE};//
+  rules[static_cast<int>(TokenType::TOKEN_OR)]            = {nullptr,     [this](bool canAssign){this->or_(canAssign);},   PREC_OR};
   rules[static_cast<int>(TokenType::TOKEN_PRINT)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_RETURN)]        = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_SUPER)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_THIS)]          = {nullptr,     nullptr,   PREC_NONE};
-  rules[static_cast<int>(TokenType::TOKEN_TRUE)]          = {[this](){this->literal();}, nullptr,   PREC_NONE};//
+  rules[static_cast<int>(TokenType::TOKEN_TRUE)]          = {[this](bool canAssign){this->literal(canAssign);}, nullptr,   PREC_NONE};//
   rules[static_cast<int>(TokenType::TOKEN_VAR)]           = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_WHILE)]         = {nullptr,     nullptr,   PREC_NONE};
   rules[static_cast<int>(TokenType::TOKEN_ERROR)]         = {nullptr,     nullptr,   PREC_NONE};

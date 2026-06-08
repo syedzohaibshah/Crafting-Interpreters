@@ -29,6 +29,13 @@ struct ObjString {
   char chars[];  // Flexible array member - stores characters inline
 };
 
+typedef struct {
+  Obj obj;
+  int arity;
+  Chunk chunk;
+  ObjString* name;
+} ObjFunction;
+
 static inline bool isObjType(Value value, ObjType type) {
   return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }

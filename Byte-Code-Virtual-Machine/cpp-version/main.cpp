@@ -63,19 +63,16 @@ static void repl(VM& vm) {
 }
 
 int main(int argc, const char* argv[]) {
-
-    VM vm;
-   
     if (argc == 1) {
-      repl(vm);
+      repl(::vm);
+      return 0;
     } else if (argc == 2) {
         try {
-               return runFile(vm, argv[1]);
+               return runFile(::vm, argv[1]);
            } catch (const std::exception& e) {
                std::cerr << e.what() << "\n";
                return 70;
            }
-      runFile( vm,argv[1]);
     } 
  std::cerr << "Usage: clox [path]\n";
   // Chunk chunk;
